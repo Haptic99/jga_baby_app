@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'baby_controller.dart';
+import 'grinder_screen.dart'; // Füge diesen Import hinzu
 
 void main() {
   runApp(
@@ -53,7 +54,13 @@ class BabyHomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             _actionBtn("Döner", Icons.fastfood, Colors.orange, () => baby.feed(20)),
-            _actionBtn("Joint", Icons.smoke_free, Colors.green, () => baby.smoke(25)),
+            _actionBtn("Joint", Icons.smoke_free, Colors.green, () {
+              // Statt direkt zu konsumieren, starten wir das Minispiel
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const GrinderScreen()),
+              );
+            }),
           ],
         ),
       ],
