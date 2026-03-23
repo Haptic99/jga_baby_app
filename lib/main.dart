@@ -34,14 +34,15 @@ class BabyHomeScreen extends StatelessWidget {
         backgroundColor: baby.isAlive ? Colors.orange : Colors.grey[900],
         foregroundColor: Colors.white,
       ),
+      // HIER: context wird jetzt an _buildLivingUI übergeben
       body: Center(
-        child: baby.isAlive ? _buildLivingUI(baby) : _buildDeathUI(context, baby),
+        child: baby.isAlive ? _buildLivingUI(context, baby) : _buildDeathUI(context, baby),
       ),
     );
   }
 
-  // Wenn das Baby lebt...
-  Widget _buildLivingUI(BabyController baby) {
+  // HIER: BuildContext context als Parameter hinzugefügt
+  Widget _buildLivingUI(BuildContext context, BabyController baby) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -55,7 +56,6 @@ class BabyHomeScreen extends StatelessWidget {
           children: [
             _actionBtn("Döner", Icons.fastfood, Colors.orange, () => baby.feed(20)),
             _actionBtn("Joint", Icons.smoke_free, Colors.green, () {
-              // Statt direkt zu konsumieren, starten wir das Minispiel
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const GrinderScreen()),
@@ -67,7 +67,6 @@ class BabyHomeScreen extends StatelessWidget {
     );
   }
 
-  // Wenn das Baby tot ist... (Shot-Modus)
   Widget _buildDeathUI(BuildContext context, BabyController baby) {
     final TextEditingController codeController = TextEditingController();
     return Padding(
@@ -95,7 +94,7 @@ class BabyHomeScreen extends StatelessWidget {
             onPressed: () {
               if (!baby.revive(codeController.text)) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Falscher Code! Trink noch einen!"))
+                    const SnackBar(content: Text("Falscher Code! Trink noch einen!"))
                 );
               }
             },
@@ -114,7 +113,13 @@ class BabyHomeScreen extends StatelessWidget {
         children: [
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 5),
-          LinearProgressIndicator(value: value / 100, minHeight: 12, color: color, backgroundColor: color.withOpacity(0.1)),
+          LinearProgressIndicator(
+              value: value / 100,
+              minHeight: 12,
+              color: color,
+              // HIER: Umstellung auf withValues für moderne Flutter-Versionen
+              backgroundColor: color.withValues(alpha: 0.1)
+          ),
         ],
       ),
     );
@@ -128,4 +133,4 @@ class BabyHomeScreen extends StatelessWidget {
       style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white),
     );
   }
-}§
+}
