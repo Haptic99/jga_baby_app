@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'baby_controller.dart';
-import 'smoke_minigame_screen.dart'; // Import neu
+import 'smoke_minigame_screen.dart';
 
 void main() {
   runApp(
@@ -31,7 +31,8 @@ class BabyHomeScreen extends StatelessWidget {
         actions: [
           Center(child: Padding(
             padding: const EdgeInsets.only(right: 15),
-            child: Text("Schulden: ${baby.debt}€", style: const TextStyle(fontWeight: FontWeight.bold)),
+            // ÄNDERUNG: Währung auf CHF angepasst
+            child: Text("Schulden: ${baby.debt.toStringAsFixed(2)} CHF", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ))
         ],
         backgroundColor: baby.isAlive ? Colors.orange : Colors.grey[900],
@@ -59,11 +60,10 @@ class BabyHomeScreen extends StatelessWidget {
               onPressed: () => baby.feed(20),
               icon: const Icon(Icons.fastfood),
               label: const Text("Döner"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white, padding: const EdgeInsets.all(15)),
             ),
             ElevatedButton.icon(
               onPressed: () {
-                // Minispiel starten
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()),
@@ -71,7 +71,7 @@ class BabyHomeScreen extends StatelessWidget {
               },
               icon: const Icon(Icons.smoke_free),
               label: const Text("Joint rauchen"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.all(15)),
             ),
           ],
         ),
@@ -84,15 +84,17 @@ class BabyHomeScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(30.0),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisAlignment: Main => .center,
         children: [
           const Text("💀", style: TextStyle(fontSize: 100)),
           const Text("BABY TOT!", style: TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
+          const Text("TRINK EINEN SHOT!\nDann Code eingeben:", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
           const SizedBox(height: 20),
           TextField(
             controller: codeController,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(labelText: "Geheimcode", labelStyle: TextStyle(color: Colors.white70)),
+            decoration: const InputDecoration(enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)), labelText: "Geheimcode"),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -110,8 +112,9 @@ class BabyHomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          LinearProgressIndicator(value: value / 100, minHeight: 12, color: color),
+          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          const SizedBox(height: 5),
+          LinearProgressIndicator(value: value / 100, minHeight: 12, borderRadius: BorderRadius.circular(10), color: color, backgroundColor: color.withOpacity(0.1)),
         ],
       ),
     );

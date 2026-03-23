@@ -22,5 +22,6 @@ flutter:
   assets:
     - assets/weed.png
     - assets/grinder_top.png
+    - assets/grinder_side.png # NEU
     - assets/joint_unlit.png
     - assets/joint_lit.png

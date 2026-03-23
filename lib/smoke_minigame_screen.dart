@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -13,13 +12,36 @@ class SmokeMinigameScreen extends StatefulWidget {
 }
 
 class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
-  int step = 1;
+  // ÄNDERUNG: Wir starten direkt bei Step 2 (Gras kaufen), um den Klick zu sparen
+  int step = 2;
   bool isWeedInGrinder = false;
   double grinderRotation = 0.0;
   double rollProgress = 0.0;
   StreamSubscription? _sensorSub;
 
-  void nextStep() => setState(() => step++);
+  void nextStep() {
+    setState(() {
+      step++;
+      // Wenn wir zu Step 7 kommen, Sensoren starten
+      if (step == 7) {
+        _startRollingSensor();
+      }
+    });
+  }
+
+  void _startRollingSensor() {
+    _sensorSub?.cancel();
+    _sensorSub = userAccelerometerEvents.listen((event) {
+      if (step != 7) return;
+      setState(() {
+        rollProgress += (event.x.abs() + event.y.abs()) * 0.015; // Etwas schneller
+        if (rollProgress >= 1.0) {
+          _sensorSub?.cancel();
+          nextStep();
+        }
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -32,7 +54,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
     final baby = Provider.of<BabyController>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Step $step: Joint Vorbereitung")),
+      appBar: AppBar(title: Text("Vorbereitung - Schritt ${step - 1}")),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
@@ -44,52 +66,69 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
   Widget _buildStepContent(BabyController baby) {
     switch (step) {
-      case 1:
-        return ElevatedButton(onPressed: nextStep, child: const Text("Joint rauchen"));
+    // Step 1 ist weggefallen.
       case 2:
-        return ElevatedButton(onPressed: nextStep, child: const Text("Gras kaufen"));
+        return ElevatedButton.icon(
+          onPressed: nextStep,
+          icon: const Icon(Icons.shopping_cart),
+          label: const Text("Gras kaufen"),
+          style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20), textStyle: const TextStyle(fontSize: 18)),
+        );
       case 3:
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Kein Geld dabei?", style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 20),
-            ElevatedButton(
+            const Text("Kein Geld dabei?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 30),
+            ElevatedButton.icon(
               onPressed: () {
                 baby.addDebt(50.0);
                 nextStep();
               },
-              child: const Text("Auf Pump beim Kollegen kaufen (50€)"),
+              icon: const Icon(Icons.money_off),
+              // ÄNDERUNG: Währung auf CHF angepasst
+              label: const Text("Auf Pump beim Kollegen kaufen (50 CHF)"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red[300], foregroundColor: Colors.white, padding: const EdgeInsets.all(15)),
             ),
           ],
         );
       case 4:
         return Column(
           children: [
-            const Text("Zieh das Gras in den Grinder!"),
+            const Text("Zieh das Gras in den Grinder!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 50),
+            // Die Gras-Quelle
             if (!isWeedInGrinder)
               Draggable<String>(
                 data: 'weed',
-                feedback: Image.asset('assets/weed.png', width: 80),
-                childWhenDragging: Container(),
-                child: Image.asset('assets/weed.png', width: 80),
+                feedback: Image.asset('assets/weed.png', width: 100),
+                childWhenDragging: Opacity(opacity: 0.3, child: Image.asset('assets/weed.png', width: 100)),
+                child: Image.asset('assets/weed.png', width: 100),
               ),
-            const SizedBox(height: 100),
+            const SizedBox(height: 80),
+            // Das Grinder-Ziel
             DragTarget<String>(
               onAccept: (data) {
-                setState(() => isWeedInGrinder = true);
-                Future.delayed(const Duration(seconds: 1), nextStep);
+                if (data == 'weed') {
+                  setState(() => isWeedInGrinder = true);
+                  Future.delayed(const Duration(milliseconds: 800), nextStep);
+                }
               },
               builder: (context, candidateData, rejectedData) => Container(
-                width: 150, height: 150,
+                width: 180, height: 180,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey),
                   shape: BoxShape.circle,
+                  color: candidateData.isNotEmpty ? Colors.green[100] : Colors.transparent,
                 ),
-                child: isWeedInGrinder
-                    ? const Icon(Icons.check, color: Colors.green, size: 50)
-                    : const Center(child: Text("GRINDER")),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // ÄNDERUNG: grinder_side.png als Zielbild
+                    Image.asset('assets/grinder_side.png', width: 150),
+                    if (isWeedInGrinder)
+                      const Opacity(opacity: 0.8, child: Icon(Icons.check_circle, color: Colors.green, size: 80))
+                  ],
+                ),
               ),
             ),
           ],
@@ -97,60 +136,57 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
       case 5:
         return Column(
           children: [
-            const Text("Dreh den Grinder! (Wische im Kreis)"),
+            const Text("Dreh den Grinder! (Wische horizontal)", style: TextStyle(fontSize: 18)),
             const SizedBox(height: 50),
             GestureDetector(
               onPanUpdate: (details) {
-                setState(() => grinderRotation += details.delta.dx * 0.05);
-                if (grinderRotation.abs() > 20) nextStep();
+                setState(() => grinderRotation += details.delta.dx * 0.08); // Schneller
+                if (grinderRotation.abs() > 30) nextStep();
               },
               child: Transform.rotate(
                 angle: grinderRotation,
-                child: Image.asset('assets/grinder_top.png', width: 200),
+                child: Image.asset('assets/grinder_top.png', width: 220),
               ),
             ),
           ],
         );
       case 6:
-        return ElevatedButton(onPressed: nextStep, child: const Text("Joint bauen"));
+        return ElevatedButton.icon(
+          onPressed: nextStep,
+          icon: const Icon(Icons.handyman),
+          label: const Text("Joint bauen"),
+          style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
+        );
       case 7:
-        if (_sensorSub == null) {
-          _sensorSub = userAccelerometerEvents.listen((event) {
-            setState(() {
-              rollProgress += (event.x.abs() + event.y.abs()) * 0.01;
-              if (rollProgress >= 1.0) {
-                _sensorSub?.cancel();
-                nextStep();
-              }
-            });
-          });
-        }
+      // Sensor wird automatisch in nextStep gestartet.
         return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text("Schüttle das Handy, um zu drehen!"),
+            const Text("Schüttle das Handy heftig, um zu drehen!", style: TextStyle(fontSize: 18), textAlign: TextAlign.center,),
             const SizedBox(height: 50),
-            LinearProgressIndicator(value: rollProgress.clamp(0, 1)),
+            LinearProgressIndicator(value: rollProgress.clamp(0, 1), minHeight: 20, borderRadius: BorderRadius.circular(10),),
             const SizedBox(height: 20),
-            Image.asset('assets/joint_unlit.png', width: 150),
+            // Hier ein Bild vom Bauen einfügen falls vorhanden
+            Image.asset('assets/joint_unlit.png', width: 180),
           ],
         );
       case 8:
         return Column(
           children: [
-            const Text("Anrauchen und dem Baby geben!"),
-            const SizedBox(height: 50),
+            const Text("Geschafft!\nÜbergib den Joint an das Baby!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            const SizedBox(height: 60),
             GestureDetector(
               onTap: () {
-                baby.smoke(30);
-                Navigator.pop(context); // Zurück zum Hauptscreen
+                baby.smoke(35); // Etwas mehr Chill-Boost
+                Navigator.pop(context);
               },
-              child: Image.asset('assets/joint_lit.png', width: 200),
+              child: Image.asset('assets/joint_lit.png', width: 250),
             ),
             const Text("\n(Tippe auf den Joint zum Inhalieren)"),
           ],
         );
       default:
-        return Container();
+        return const Text("Ein Fehler ist aufgetreten.");
     }
   }
 }
