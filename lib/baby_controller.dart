@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class BabyController extends ChangeNotifier {
   double hunger = 100.0;
   double chillLevel = 100.0;
-  double debt = 0.0; // Schulden beim Kollegen
+  double debt = 0.0; // Schulden in CHF
   bool isAlive = true;
 
   final String secretReviveCode = "4242";
@@ -22,7 +22,9 @@ class BabyController extends ChangeNotifier {
         chillLevel -= 1.0;
 
         if (hunger <= 0 || chillLevel <= 0) {
-          hunger = 0; chillLevel = 0; isAlive = false;
+          hunger = 0;
+          chillLevel = 0;
+          isAlive = false;
           _timer?.cancel();
         }
         notifyListeners();
@@ -50,7 +52,8 @@ class BabyController extends ChangeNotifier {
   bool revive(String code) {
     if (code == secretReviveCode) {
       isAlive = true;
-      hunger = 60.0; chillLevel = 60.0;
+      hunger = 60.0;
+      chillLevel = 60.0;
       _startLifeLoop();
       notifyListeners();
       return true;

@@ -10,7 +10,10 @@ void main() {
       child: MaterialApp(
         title: 'JGA Baby Watch',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange), useMaterial3: true),
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+          useMaterial3: true,
+        ),
         home: const BabyHomeScreen(),
       ),
     ),
@@ -29,11 +32,15 @@ class BabyHomeScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text("🍼 JGA Baby-Watch 2026"),
         actions: [
-          Center(child: Padding(
-            padding: const EdgeInsets.only(right: 15),
-            // ÄNDERUNG: Währung auf CHF angepasst
-            child: Text("Schulden: ${baby.debt.toStringAsFixed(2)} CHF", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ))
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 15),
+              child: Text(
+                "Schulden: ${baby.debt.toStringAsFixed(2)} CHF",
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          )
         ],
         backgroundColor: baby.isAlive ? Colors.orange : Colors.grey[900],
         foregroundColor: Colors.white,
@@ -60,7 +67,11 @@ class BabyHomeScreen extends StatelessWidget {
               onPressed: () => baby.feed(20),
               icon: const Icon(Icons.fastfood),
               label: const Text("Döner"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white, padding: const EdgeInsets.all(15)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(15),
+              ),
             ),
             ElevatedButton.icon(
               onPressed: () {
@@ -71,7 +82,11 @@ class BabyHomeScreen extends StatelessWidget {
               },
               icon: const Icon(Icons.smoke_free),
               label: const Text("Joint rauchen"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.all(15)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.all(15),
+              ),
             ),
           ],
         ),
@@ -84,21 +99,38 @@ class BabyHomeScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(30.0),
       child: Column(
-        mainAxisAlignment: Main => .center,
+        mainAxisAlignment: MainAxisAlignment.center, // HIER WAR DER FEHLER - JETZT GEFIXT!
         children: [
           const Text("💀", style: TextStyle(fontSize: 100)),
-          const Text("BABY TOT!", style: TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.bold)),
+          const Text(
+            "BABY TOT!",
+            style: TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 10),
-          const Text("TRINK EINEN SHOT!\nDann Code eingeben:", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
+          const Text(
+            "TRINK EINEN SHOT!\nDann Code eingeben:",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
           const SizedBox(height: 20),
           TextField(
             controller: codeController,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)), labelText: "Geheimcode"),
+            decoration: const InputDecoration(
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+              labelText: "Geheimcode",
+              labelStyle: TextStyle(color: Colors.white70),
+            ),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () => baby.revive(codeController.text),
+            onPressed: () {
+              if (!baby.revive(codeController.text)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Falscher Code! Trink noch einen!")),
+                );
+              }
+            },
             child: const Text("WIEDERBELEBEN"),
           ),
         ],
@@ -114,7 +146,13 @@ class BabyHomeScreen extends StatelessWidget {
         children: [
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 5),
-          LinearProgressIndicator(value: value / 100, minHeight: 12, borderRadius: BorderRadius.circular(10), color: color, backgroundColor: color.withOpacity(0.1)),
+          LinearProgressIndicator(
+            value: value / 100,
+            minHeight: 12,
+            borderRadius: BorderRadius.circular(10),
+            color: color,
+            backgroundColor: color.withOpacity(0.1),
+          ),
         ],
       ),
     );
