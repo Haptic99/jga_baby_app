@@ -13,7 +13,7 @@ class SmokeMinigameScreen extends StatefulWidget {
 }
 
 class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
-  int step = 2;
+  int step = 1;
   bool isWeedInGrinder = false;
   bool babyGotJoint = false;
   double grinderRotation = 0.0;
@@ -24,21 +24,26 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   void nextStep() {
     setState(() {
       step++;
-      if (step == 7) _startRollingSensor();
+      if (step == 6) _startRollingSensor();
     });
   }
 
   void _startRollingSensor() {
     _sensorSub?.cancel();
     _sensorSub = userAccelerometerEvents.listen((event) {
-      if (step != 7) return;
-      setState(() {
-        rollProgress += (event.x.abs() + event.y.abs()) * 0.02;
-        if (rollProgress >= 1.0) {
-          _sensorSub?.cancel();
-          nextStep();
-        }
-      });
+      if (step != 6) return;
+      // Kraft berechnen
+      double acceleration = math.sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+      // Schwellenwert: Nur starke Bewegungen zählen
+      if (acceleration > 13.0) {
+        setState(() {
+          rollProgress += acceleration * 0.005;
+          if (rollProgress >= 1.0) {
+            _sensorSub?.cancel();
+            nextStep();
+          }
+        });
+      }
     });
   }
 
@@ -53,25 +58,27 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
     final baby = Provider.of<BabyController>(context, listen: false);
 
     return Scaffold(
-      appBar: AppBar(title: Text("Vorbereitung - Schritt ${step - 1}")),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: _buildStepContent(baby),
+      appBar: AppBar(title: Text("Vorbereitung - Schritt $step / 7")),
+      body: Center( // Stellt sicher, dass alles zentriert ist
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: _buildStepContent(baby),
+        ),
       ),
     );
   }
 
   Widget _buildStepContent(BabyController baby) {
     switch (step) {
-      case 2:
-        return Center(child: ElevatedButton.icon(
+      case 1:
+        return ElevatedButton.icon(
           onPressed: nextStep, icon: const Icon(Icons.shopping_cart),
           label: const Text("Gras kaufen"),
-          style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
-        ));
-      case 3:
+          style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20), textStyle: const TextStyle(fontSize: 18)),
+        );
+      case 2:
         return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Text("Kein Geld dabei?", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 30),
@@ -83,18 +90,21 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
             ),
           ],
         );
-      case 4:
+      case 3:
         return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Zieh das Gras in den Grinder!", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Spacer(),
+            const Text("Zieh das Gras in den Grinder!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 50),
             if (!isWeedInGrinder)
               Draggable<String>(
                 data: 'weed',
-                feedback: Image.asset('assets/weed.png', width: 120), // 20% Grösser
+                feedback: Image.asset('assets/weed.png', width: 144),
                 childWhenDragging: Opacity(opacity: 0.3, child: Image.asset('assets/weed.png', width: 120)),
                 child: Image.asset('assets/weed.png', width: 120),
-              ),
+              )
+            else
+              const SizedBox(height: 120),
             const SizedBox(height: 50),
             DragTarget<String>(
               onAccept: (data) {
@@ -103,101 +113,100 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
                   Future.delayed(const Duration(milliseconds: 800), nextStep);
                 }
               },
-              builder: (context, candidateData, rejectedData) => Container(
-                width: 250, height: 250,
+              builder: (context, candidateData, rejectedData) => Stack(
                 alignment: Alignment.center,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset('assets/grinder_side.png', width: 210), // 30% Grösser
-                    if (isWeedInGrinder) const Icon(Icons.check_circle, color: Colors.green, size: 100)
-                  ],
-                ),
+                children: [
+                  Image.asset('assets/grinder_side.png', width: 208),
+                  if (isWeedInGrinder) const Icon(Icons.check_circle, color: Colors.green, size: 100)
+                ],
               ),
             ),
-            const Spacer(),
+          ],
+        );
+      case 4:
+        double grindPercent = (grinderRotation.abs() / 20.0).clamp(0.0, 1.0);
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text("Dreh den Grinder im Kreis!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            LinearProgressIndicator(value: grindPercent, minHeight: 10, color: Colors.green),
+            const SizedBox(height: 40),
+            GestureDetector(
+              onPanUpdate: (details) {
+                Offset center = const Offset(143, 143);
+                double currentAngle = math.atan2(details.localPosition.dy - center.dy, details.localPosition.dx - center.dx);
+                setState(() {
+                  grinderRotation += (currentAngle - lastAngle).clamp(-0.5, 0.5);
+                  lastAngle = currentAngle;
+                });
+                if (grinderRotation.abs() > 20) nextStep();
+              },
+              onPanStart: (details) {
+                Offset center = const Offset(143, 143);
+                lastAngle = math.atan2(details.localPosition.dy - center.dy, details.localPosition.dx - center.dx);
+              },
+              child: Transform.rotate(
+                angle: grinderRotation,
+                child: Image.asset('assets/grinder_top.png', width: 286),
+              ),
+            ),
           ],
         );
       case 5:
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text("Dreh den Grinder im Kreis!", style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 40),
-            Center(
-              child: GestureDetector(
-                onPanUpdate: (details) {
-                  // Berechnung der kreisförmigen Drehung
-                  Offset center = const Offset(150, 150); // Annahme Mitte des Widgets
-                  double currentAngle = math.atan2(details.localPosition.dy - center.dy, details.localPosition.dx - center.dx);
-                  setState(() {
-                    grinderRotation += (currentAngle - lastAngle).clamp(-0.5, 0.5);
-                    lastAngle = currentAngle;
-                  });
-                  if (grinderRotation.abs() > 15) nextStep();
-                },
-                onPanStart: (details) {
-                  Offset center = const Offset(150, 150);
-                  lastAngle = math.atan2(details.localPosition.dy - center.dy, details.localPosition.dx - center.dx);
-                },
-                child: Transform.rotate(
-                  angle: grinderRotation,
-                  child: Image.asset('assets/grinder_top.png', width: 280), // 30% Grösser
-                ),
-              ),
-            ),
-          ],
-        );
-      case 6:
-        return Center(child: ElevatedButton.icon(
+        return ElevatedButton.icon(
           onPressed: nextStep, icon: const Icon(Icons.handyman),
           label: const Text("Joint bauen"),
           style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(20)),
-        ));
-      case 7:
+        );
+      case 6:
         return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Schüttle das Handy!", style: TextStyle(fontSize: 18)),
+            const Text("Drehe nun den Joint!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 10),
+            const Text("Schüttle das Handy kräftig", style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 40),
-            LinearProgressIndicator(value: rollProgress.clamp(0, 1), minHeight: 20, borderRadius: BorderRadius.circular(10)),
-            const SizedBox(height: 30),
+            LinearProgressIndicator(value: rollProgress.clamp(0, 1), minHeight: 25, borderRadius: BorderRadius.circular(15)),
+            const SizedBox(height: 40),
             Image.asset('assets/joint_unlit.png', width: 220),
           ],
         );
-      case 8:
+      case 7:
         return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Text("Zieh den Joint zum Baby!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const Spacer(),
+            const Text("Zieh den Joint zum Baby!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 50),
             if (!babyGotJoint)
               Draggable<String>(
                 data: 'joint',
-                feedback: Image.asset('assets/joint_lit.png', width: 200),
-                childWhenDragging: Opacity(opacity: 0.3, child: Image.asset('assets/joint_lit.png', width: 200)),
+                feedback: Image.asset('assets/joint_lit.png', width: 240),
+                childWhenDragging: Opacity(opacity: 0.2, child: Image.asset('assets/joint_lit.png', width: 200)),
                 child: Image.asset('assets/joint_lit.png', width: 200),
-              ),
-            const SizedBox(height: 60),
+              )
+            else
+              const SizedBox(height: 200),
+            const SizedBox(height: 50),
             DragTarget<String>(
               onAccept: (data) {
                 if (data == 'joint') {
                   setState(() => babyGotJoint = true);
                   baby.smoke(40);
-                  Future.delayed(const Duration(milliseconds: 1000), () => Navigator.pop(context));
+                  Future.delayed(const Duration(milliseconds: 1200), () => Navigator.pop(context));
                 }
               },
               builder: (context, candidateData, rejectedData) => Column(
                 children: [
-                  const Text("👶", style: TextStyle(fontSize: 120)),
-                  if (candidateData.isNotEmpty) const Text("HUNGRIG!", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold))
+                  const Text("👶", style: TextStyle(fontSize: 140)),
+                  if (candidateData.isNotEmpty) const Text("GIB MIR!", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 20))
                 ],
               ),
             ),
-            const Spacer(),
           ],
         );
       default:
-        return const Center(child: Text("Fehler."));
+        return const Text("Fehler.");
     }
   }
 }

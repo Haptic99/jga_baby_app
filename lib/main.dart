@@ -33,16 +33,16 @@ class BabyHomeScreen extends StatelessWidget {
         title: const Text("🍼 JGA Baby-Watch 2026"),
         backgroundColor: baby.isAlive ? Colors.orange : Colors.grey[900],
         foregroundColor: Colors.white,
+        centerTitle: true,
       ),
       body: Stack(
         children: [
           Center(
             child: baby.isAlive ? _buildLivingUI(context, baby) : _buildDeathUI(context, baby),
           ),
-          // Statistik-Button unten in der Mitte
           if (baby.isAlive)
             Positioned(
-              bottom: 30,
+              bottom: 40,
               left: 0,
               right: 0,
               child: Center(
@@ -52,6 +52,8 @@ class BabyHomeScreen extends StatelessWidget {
                   label: const Text("Statistiken"),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                    backgroundColor: Colors.blueGrey,
+                    foregroundColor: Colors.white,
                   ),
                 ),
               ),
@@ -64,18 +66,20 @@ class BabyHomeScreen extends StatelessWidget {
   void _showStats(BuildContext context, BabyController baby) {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) {
         return Container(
-          padding: const EdgeInsets.all(25),
+          padding: const EdgeInsets.all(30),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text("JGA Statistik", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+              const Text("JGA Statistik", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
               const Divider(),
-              _statRow(Icons.money, "Schulden:", "${baby.debt.toStringAsFixed(2)} CHF", Colors.red),
-              _statRow(Icons.fastfood, "Gegessene Döner:", "${baby.donersEaten}", Colors.orange),
-              _statRow(Icons.smoke_free, "Gepaffte Joints:", "${baby.jointsSmoked}", Colors.green),
-              _statRow(Icons.skull, "Todesfälle:", "${baby.deathsCount}", Colors.black),
+              _statRow(Icons.account_balance_wallet, "Schulden:", "${baby.debt.toStringAsFixed(2)} CHF", Colors.red),
+              _statRow(Icons.fastfood, "Döner gegessen:", "${baby.donersEaten}", Colors.orange),
+              _statRow(Icons.smoke_free, "Joints gepafft:", "${baby.jointsSmoked}", Colors.green),
+              _statRow(Icons.sentiment_very_dissatisfied, "Todesfälle:", "${baby.deathsCount}", Colors.black),
               const SizedBox(height: 20),
             ],
           ),
@@ -86,11 +90,11 @@ class BabyHomeScreen extends StatelessWidget {
 
   Widget _statRow(IconData icon, String label, String value, Color color) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Row(children: [Icon(icon, color: color), const SizedBox(width: 10), Text(label)]),
+          Row(children: [Icon(icon, color: color), const SizedBox(width: 15), Text(label, style: const TextStyle(fontSize: 16))]),
           Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
@@ -103,8 +107,8 @@ class BabyHomeScreen extends StatelessWidget {
       children: [
         const Text("👶", style: TextStyle(fontSize: 120)),
         const SizedBox(height: 20),
-        _statusLabel("Mageninhalt (Döner)", baby.hunger, Colors.red),
-        _statusLabel("Chill-Faktor (🥦)", baby.chillLevel, Colors.green),
+        _statusSlider("Mageninhalt (Döner)", baby.hunger, Colors.red),
+        _statusSlider("Chill-Faktor (🥦)", baby.chillLevel, Colors.green),
         const SizedBox(height: 50),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -115,7 +119,7 @@ class BabyHomeScreen extends StatelessWidget {
             }),
           ],
         ),
-        const SizedBox(height: 100), // Platz für Statistik-Button
+        const SizedBox(height: 120),
       ],
     );
   }
@@ -135,7 +139,11 @@ class BabyHomeScreen extends StatelessWidget {
           TextField(
             controller: codeController,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)), labelText: "Geheimcode", labelStyle: TextStyle(color: Colors.white)),
+            decoration: const InputDecoration(
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+              labelText: "Geheimcode",
+              labelStyle: TextStyle(color: Colors.white),
+            ),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
@@ -147,7 +155,7 @@ class BabyHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _statusLabel(String title, double value, Color color) {
+  Widget _statusSlider(String title, double value, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
       child: Column(

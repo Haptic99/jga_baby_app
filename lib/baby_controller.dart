@@ -7,7 +7,7 @@ class BabyController extends ChangeNotifier {
   double debt = 0.0; // Schulden in CHF
   bool isAlive = true;
 
-  // NEU: Statistiken
+  // Statistiken
   int donersEaten = 0;
   int deathsCount = 0;
   int jointsSmoked = 0;
@@ -30,7 +30,7 @@ class BabyController extends ChangeNotifier {
           hunger = 0;
           chillLevel = 0;
           isAlive = false;
-          deathsCount++; // Statistik: Tot erhöht
+          deathsCount++;
           _timer?.cancel();
         }
         notifyListeners();
@@ -46,14 +46,14 @@ class BabyController extends ChangeNotifier {
   void feed(double amount) {
     if (!isAlive) return;
     hunger = (hunger + amount).clamp(0, 100);
-    donersEaten++; // Statistik: Döner erhöht
+    donersEaten++;
     notifyListeners();
   }
 
   void smoke(double amount) {
     if (!isAlive) return;
     chillLevel = (chillLevel + amount).clamp(0, 100);
-    jointsSmoked++; // Statistik: Joints erhöht
+    jointsSmoked++;
     notifyListeners();
   }
 
