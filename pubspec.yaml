@@ -1,5 +1,5 @@
 name: jga_baby_app
-description: "Ein JGA Tamagotchi für den Bräutigam."
+description: "JGA Tamagotchi für den Bräutigam."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,9 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  # Das Herzstück für die Datenverwaltung
   provider: ^6.1.1
-  # Die Sensoren für das Grinder-Minispiel
   sensors_plus: ^6.1.1
 
 dev_dependencies:
@@ -21,3 +19,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/weed.png
+    - assets/grinder_top.png
+    - assets/joint_unlit.png
+    - assets/joint_lit.png

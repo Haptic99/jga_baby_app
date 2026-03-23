@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'baby_controller.dart';
-import 'grinder_screen.dart';
+import 'smoke_minigame_screen.dart'; // Import neu
 
 void main() {
   runApp(
@@ -10,10 +10,7 @@ void main() {
       child: MaterialApp(
         title: 'JGA Baby Watch',
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
-          useMaterial3: true,
-        ),
+        theme: ThemeData(colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange), useMaterial3: true),
         home: const BabyHomeScreen(),
       ),
     ),
@@ -31,36 +28,51 @@ class BabyHomeScreen extends StatelessWidget {
       backgroundColor: baby.isAlive ? const Color(0xFFF5F5F5) : Colors.black,
       appBar: AppBar(
         title: const Text("🍼 JGA Baby-Watch 2026"),
+        actions: [
+          Center(child: Padding(
+            padding: const EdgeInsets.only(right: 15),
+            child: Text("Schulden: ${baby.debt}€", style: const TextStyle(fontWeight: FontWeight.bold)),
+          ))
+        ],
         backgroundColor: baby.isAlive ? Colors.orange : Colors.grey[900],
         foregroundColor: Colors.white,
       ),
-      // HIER: context wird jetzt an _buildLivingUI übergeben
       body: Center(
         child: baby.isAlive ? _buildLivingUI(context, baby) : _buildDeathUI(context, baby),
       ),
     );
   }
 
-  // HIER: BuildContext context als Parameter hinzugefügt
   Widget _buildLivingUI(BuildContext context, BabyController baby) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text("👶", style: TextStyle(fontSize: 120)),
         const SizedBox(height: 20),
-        _statusSlider("Mageninhalt (Döner)", baby.hunger, Colors.red),
-        _statusSlider("Chill-Faktor (🥦)", baby.chillLevel, Colors.green),
+        _statusLabel("Mageninhalt (Döner)", baby.hunger, Colors.red),
+        _statusLabel("Chill-Faktor (🥦)", baby.chillLevel, Colors.green),
         const SizedBox(height: 50),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _actionBtn("Döner", Icons.fastfood, Colors.orange, () => baby.feed(20)),
-            _actionBtn("Joint", Icons.smoke_free, Colors.green, () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const GrinderScreen()),
-              );
-            }),
+            ElevatedButton.icon(
+              onPressed: () => baby.feed(20),
+              icon: const Icon(Icons.fastfood),
+              label: const Text("Döner"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, foregroundColor: Colors.white),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                // Minispiel starten
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()),
+                );
+              },
+              icon: const Icon(Icons.smoke_free),
+              label: const Text("Joint rauchen"),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white),
+            ),
           ],
         ),
       ],
@@ -76,28 +88,15 @@ class BabyHomeScreen extends StatelessWidget {
         children: [
           const Text("💀", style: TextStyle(fontSize: 100)),
           const Text("BABY TOT!", style: TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          const Text("TRINK EINEN SHOT!\nDann frag den Best-Man nach dem Code.",
-              textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
           TextField(
             controller: codeController,
             style: const TextStyle(color: Colors.white),
-            decoration: const InputDecoration(
-              labelText: "Geheimcode",
-              labelStyle: TextStyle(color: Colors.white70),
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-            ),
+            decoration: const InputDecoration(labelText: "Geheimcode", labelStyle: TextStyle(color: Colors.white70)),
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () {
-              if (!baby.revive(codeController.text)) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Falscher Code! Trink noch einen!"))
-                );
-              }
-            },
+            onPressed: () => baby.revive(codeController.text),
             child: const Text("WIEDERBELEBEN"),
           ),
         ],
@@ -105,32 +104,16 @@ class BabyHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _statusSlider(String title, double value, Color color) {
+  Widget _statusLabel(String title, double value, Color color) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const SizedBox(height: 5),
-          LinearProgressIndicator(
-              value: value / 100,
-              minHeight: 12,
-              color: color,
-              // HIER: Umstellung auf withValues für moderne Flutter-Versionen
-              backgroundColor: color.withValues(alpha: 0.1)
-          ),
+          LinearProgressIndicator(value: value / 100, minHeight: 12, color: color),
         ],
       ),
-    );
-  }
-
-  Widget _actionBtn(String text, IconData icon, Color color, VoidCallback onTap) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon),
-      label: Text(text),
-      style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white),
     );
   }
 }
