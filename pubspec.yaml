@@ -25,3 +25,5 @@ flutter:
     - assets/grinder_side.png
     - assets/joint_unlit.png
     - assets/joint_lit.png
+    - assets/family_boro.png # NEU
+    - assets/baby.png        # NEU

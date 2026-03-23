@@ -105,7 +105,8 @@ class BabyHomeScreen extends StatelessWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("👶", style: TextStyle(fontSize: 120)),
+        // NEU: Hier wird das Familienfoto angezeigt
+        Image.asset('assets/family_boro.png', height: 250, fit: BoxFit.contain),
         const SizedBox(height: 20),
         _statusSlider("Mageninhalt (Döner)", baby.hunger, Colors.red),
         _statusSlider("Chill-Faktor (🥦)", baby.chillLevel, Colors.green),

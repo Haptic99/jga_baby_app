@@ -17,6 +17,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   bool isWeedInGrinder = false;
   bool babyGotJoint = false;
   double grinderRotation = 0.0;
+  double grindProgress = 0.0; // NEU: Separater Fortschritt für den Grinder
   double lastAngle = 0.0;
   double rollProgress = 0.0;
   StreamSubscription? _sensorSub;
@@ -32,9 +33,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
     _sensorSub?.cancel();
     _sensorSub = userAccelerometerEvents.listen((event) {
       if (step != 6) return;
-      // Kraft berechnen
       double acceleration = math.sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-      // Schwellenwert: Nur starke Bewegungen zählen
       if (acceleration > 13.0) {
         setState(() {
           rollProgress += acceleration * 0.005;
@@ -59,7 +58,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text("Vorbereitung - Schritt $step / 7")),
-      body: Center( // Stellt sicher, dass alles zentriert ist
+      body: Center(
         child: Padding(
           padding: const EdgeInsets.all(20.0),
           child: _buildStepContent(baby),
@@ -124,23 +123,32 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
           ],
         );
       case 4:
-        double grindPercent = (grinderRotation.abs() / 20.0).clamp(0.0, 1.0);
+      // NEU: Fortschritt wird unabhängig von der Richtung berechnet
+        double progressPercent = (grindProgress / 25.0).clamp(0.0, 1.0);
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             const Text("Dreh den Grinder im Kreis!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            LinearProgressIndicator(value: grindPercent, minHeight: 10, color: Colors.green),
+            LinearProgressIndicator(value: progressPercent, minHeight: 10, color: Colors.green),
             const SizedBox(height: 40),
             GestureDetector(
               onPanUpdate: (details) {
                 Offset center = const Offset(143, 143);
                 double currentAngle = math.atan2(details.localPosition.dy - center.dy, details.localPosition.dx - center.dx);
+
+                double diff = currentAngle - lastAngle;
+                // Normalisierung bei Sprung von -PI zu PI
+                if (diff > math.pi) diff -= 2 * math.pi;
+                if (diff < -math.pi) diff += 2 * math.pi;
+
                 setState(() {
-                  grinderRotation += (currentAngle - lastAngle).clamp(-0.5, 0.5);
+                  grinderRotation += diff;
+                  grindProgress += diff.abs(); // Jede Bewegung zählt!
                   lastAngle = currentAngle;
                 });
-                if (grinderRotation.abs() > 20) nextStep();
+
+                if (grindProgress > 25.0) nextStep();
               },
               onPanStart: (details) {
                 Offset center = const Offset(143, 143);
@@ -198,7 +206,8 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
               },
               builder: (context, candidateData, rejectedData) => Column(
                 children: [
-                  const Text("👶", style: TextStyle(fontSize: 140)),
+                  // NEU: Hier wird das baby.png angezeigt
+                  Image.asset('assets/baby.png', height: 200, fit: BoxFit.contain),
                   if (candidateData.isNotEmpty) const Text("GIB MIR!", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 20))
                 ],
               ),
