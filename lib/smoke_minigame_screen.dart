@@ -396,7 +396,7 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      mainAxisAlignment: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min, // <--- Fix is here
       children: [
         // Header Text angepasst an das Designbild
         Text(
