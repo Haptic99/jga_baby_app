@@ -84,66 +84,173 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
         return _CombinedGrinderWorkflow(onCompleteAction: nextStep);
 
       case 3:
-      // Joint schütteln
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("Drehe nun den Joint!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                const SizedBox(height: 10),
-                const Text("Schüttle das Handy kräftig", style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 40),
-                LinearProgressIndicator(value: rollProgress.clamp(0, 1), minHeight: 25, borderRadius: BorderRadius.circular(15), color: Colors.green, backgroundColor: Colors.white24),
-                const SizedBox(height: 40),
-                Image.asset('assets/joint_unlit.png', width: 220),
-              ],
+      // Joint schütteln (im neuen Brutalismus-Design)
+        return Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/joint_mini_game_background.png'),
+              fit: BoxFit.cover,
             ),
+          ),
+          child: Column(
+            children: [
+              const SizedBox(height: 20),
+              // Header
+              const Text(
+                "JOINT DREHEN",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  shadows: outlineShadows,
+                  letterSpacing: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "SCHÜTTLE DAS HANDY KRÄFTIG",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  shadows: outlineShadows,
+                  letterSpacing: 1.0,
+                ),
+              ),
+
+              const Spacer(),
+
+              // Unlit Joint Image
+              Image.asset('assets/joint_unlit.png', width: 250),
+
+              const Spacer(),
+
+              // Fortschrittsbalken im Brutalismus-Look unten
+              Text(
+                  "${(rollProgress.clamp(0.0, 1.0) * 100).toInt()}% GEDREHT",
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                    shadows: outlineShadows,
+                  )
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: 250,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.black, width: 3),
+                  boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 3))],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(9),
+                  child: LinearProgressIndicator(
+                      value: rollProgress.clamp(0.0, 1.0),
+                      color: Colors.green,
+                      backgroundColor: Colors.transparent
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
           ),
         );
 
       case 4:
-      // Übergeben an Baby
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text("Zieh den Joint zum Baby!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-                const SizedBox(height: 50),
-                if (!babyGotJoint)
-                  Draggable<String>(
-                    data: 'joint',
-                    feedback: Material(
-                      color: Colors.transparent,
-                      child: Image.asset('assets/joint_lit.png', width: 240),
+      // Übergeben an Baby (Zentriertes Layout mit größerem Baby)
+        return Container(
+          width: double.infinity,
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('assets/joint_mini_game_background.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: Column(
+            children: [
+              // Header (bleibt oben)
+              const SizedBox(height: 20),
+              const Text(
+                "JOINT ÜBERGEBEN",
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  shadows: outlineShadows,
+                  letterSpacing: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "ZIEH DEN JOINT ZUM BABY!",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  shadows: outlineShadows,
+                  letterSpacing: 1.0,
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Der Joint zum Ziehen (jetzt oben)
+              if (!babyGotJoint)
+                Draggable<String>(
+                  data: 'joint',
+                  feedback: Material(
+                    color: Colors.transparent,
+                    child: Image.asset('assets/joint_lit.png', width: 240),
+                  ),
+                  childWhenDragging: Opacity(opacity: 0.2, child: Image.asset('assets/joint_lit.png', width: 200)),
+                  child: Image.asset('assets/joint_lit.png', width: 200),
+                )
+              else
+                const SizedBox(height: 50), // Kleinerer Platzhalter oben
+
+              // Hauptinhalt zentriert (Baby)
+              Expanded(
+                child: Center(
+                  child: DragTarget<String>(
+                    onAccept: (data) {
+                      if (data == 'joint') {
+                        setState(() => babyGotJoint = true);
+                        baby.smoke(40);
+                        // Spiel beenden und zurück zum Homescreen
+                        Future.delayed(const Duration(milliseconds: 1200), () => Navigator.pop(context));
+                      }
+                    },
+                    builder: (context, candidateData, rejectedData) => Column(
+                      mainAxisSize: MainAxisSize.min, // Inhalt zentrieren
+                      children: [
+                        Image.asset(
+                            'assets/baby.png',
+                            height: 480,
+                            fit: BoxFit.contain
+                        ),
+                        if (candidateData.isNotEmpty)
+                          const Text(
+                              "GIB MIR!",
+                              style: TextStyle(
+                                color: Colors.greenAccent,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 24,
+                                shadows: outlineShadows,
+                              )
+                          ),
+                      ],
                     ),
-                    childWhenDragging: Opacity(opacity: 0.2, child: Image.asset('assets/joint_lit.png', width: 200)),
-                    child: Image.asset('assets/joint_lit.png', width: 200),
-                  )
-                else
-                  const SizedBox(height: 200),
-                const SizedBox(height: 50),
-                DragTarget<String>(
-                  onAccept: (data) {
-                    if (data == 'joint') {
-                      setState(() => babyGotJoint = true);
-                      baby.smoke(40);
-                      // Spiel beenden und zurück zum Homescreen
-                      Future.delayed(const Duration(milliseconds: 1200), () => Navigator.pop(context));
-                    }
-                  },
-                  builder: (context, candidateData, rejectedData) => Column(
-                    children: [
-                      Image.asset('assets/baby.png', height: 200, fit: BoxFit.contain),
-                      if (candidateData.isNotEmpty) const Text("GIB MIR!", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 20))
-                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         );
       default:
@@ -153,7 +260,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 }
 
 // ---------------------------------------------------------
-// Chat Minigame Widgets
+// Chat Minigame Widgets (Unverändert)
 // ---------------------------------------------------------
 
 class _ChatMinigame extends StatefulWidget {
@@ -376,7 +483,7 @@ class _ChatBubble extends StatelessWidget {
 }
 
 // ---------------------------------------------------------
-// Kombinierter Grinder-Action Workflow (Fill -> Close -> Grind)
+// Kombinierter Grinder-Action Workflow (Fill -> Close -> Grind) (Unverändert)
 // ---------------------------------------------------------
 
 class _CombinedGrinderWorkflow extends StatefulWidget {
