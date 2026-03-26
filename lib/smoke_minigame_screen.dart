@@ -83,7 +83,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
         return _ChatMinigame(onCompleted: nextStep);
 
       case 2:
-      // NEU: Kombinierter Grinder-Action-Screen ( Fill -> Close -> Grind )
+      // Kombinierter Grinder-Action-Screen ( Fill -> Close -> Grind )
         return _CombinedGrinderWorkflow(onCompleteAction: nextStep);
 
       case 3:
@@ -143,7 +143,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 }
 
 // ---------------------------------------------------------
-// Chat Minigame Widgets (Aktualisiert)
+// Chat Minigame Widgets
 // ---------------------------------------------------------
 
 class _ChatMinigame extends StatefulWidget {
@@ -159,7 +159,6 @@ class _ChatMinigameState extends State<_ChatMinigame> {
   List<Map<String, dynamic>> messages = [];
   bool isBoroTyping = false;
   bool showNextUserInput = true;
-  // NEU: Steuert das Erscheinen des "Weiter"-Buttons
   bool showContinueButton = false;
 
   String get currentInputText {
@@ -180,10 +179,9 @@ class _ChatMinigameState extends State<_ChatMinigame> {
       showNextUserInput = false;
     });
 
-    // NEU: Wenn es die letzte Nachricht war, beenden wir den Sende-Workflow hier
+    // Wenn es die letzte Nachricht war, beenden wir den Sende-Workflow hier
     // und blenden nach einer kurzen Verzögerung den "Weiter"-Button ein.
     if (chatStage == 2) {
-      // Chat stage erhöhen, damit das Eingabefeld leer ist ("...")
       setState(() => chatStage++);
       Future.delayed(const Duration(milliseconds: 1000), () {
         setState(() => showContinueButton = true);
@@ -264,7 +262,7 @@ class _ChatMinigameState extends State<_ChatMinigame> {
             child: const Text("Boro schreibt...", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
           ),
 
-        // NEU: Der "Weiter" Button erscheint hier, wenn der Chat zu Ende ist
+        // Der "Weiter" Button erscheint hier, wenn der Chat zu Ende ist
         if (showContinueButton)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -314,7 +312,7 @@ class _ChatMinigameState extends State<_ChatMinigame> {
           ),
         ),
 
-        // Fake Tastatur Bild einsetzen und skalieren
+        // Fake Tastatur Bild
         Image.asset(
           'assets/keyboard.jpg',
           width: double.infinity,
@@ -372,11 +370,12 @@ class _ChatBubble extends StatelessWidget {
 
 
 // ---------------------------------------------------------
-// NEU: Kombinierter Grinder-Action Workflow (Fill -> Close -> Grind)
+// Kombinierter Grinder-Action Workflow (Fill -> Close -> Grind)
+// ALLES AUF EINEM SCREEN OHNE LAYOUT-SPRÜNGE
 // ---------------------------------------------------------
 
 class _CombinedGrinderWorkflow extends StatefulWidget {
-  final VoidCallback onCompleteAction; // Callback, wenn fertig gemahlen ist
+  final VoidCallback onCompleteAction;
   const _CombinedGrinderWorkflow({required this.onCompleteAction});
 
   @override
@@ -384,164 +383,205 @@ class _CombinedGrinderWorkflow extends StatefulWidget {
 }
 
 class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
-  // Interner Status für die 3 Phasen: 0=Füllen, 1=Schließen, 2=Mahlen
+  // 0 = Gras in Grinder ziehen, 1 = Deckel auf Grinder ziehen, 2 = Mahlen
   int grinderSubstep = 0;
-  bool isLidClosed = false; // Wird true, wenn der Deckel draufgezogen wurde
 
-  // Variablen für die Mahl-Animation (aus altem Schritt 3)
   double grinderRotation = 0.0;
   double grindProgress = 0.0;
   double lastAngle = 0.0;
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min, // <--- Fix is here
-      children: [
-        // Header Text angepasst an das Designbild
-        Text(
-          _getWorkflowTitle(),
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 10),
-        const Text("Befolge die Anweisungen", style: TextStyle(color: Colors.grey)),
-        const SizedBox(height: 30),
-
-        // Zentraler Action-Bereich
-        _buildActionContent(),
-      ],
-    );
-  }
+  // Einheitliche feste Größe für Grinder-Top und Grinder-Base
+  final double elementSize = 180.0;
 
   String _getWorkflowTitle() {
-    if (grinderSubstep == 0) return "SCHRITT 2/4:\nGRAS IN DEN OFFENEN GRINDER FÜLLEN";
+    if (grinderSubstep == 0) return "SCHRITT 2/4:\nGRAS IN DEN GRINDER FÜLLEN";
     if (grinderSubstep == 1) return "SCHRITT 2/4:\nDECKEL AUFSETZEN";
     return "SCHRITT 2/4:\nGRINDER DREHEN";
   }
 
-  Widget _buildActionContent() {
-    // Phase 0: Gras in den offenen Grinder füllen
-    if (grinderSubstep == 0) {
-      return Column(
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
         children: [
-          // Gras zum Ziehen
-          Draggable<String>(
-            data: 'weed',
-            feedback: Image.asset('assets/weed.png', width: 144),
-            childWhenDragging: Opacity(opacity: 0.3, child: Image.asset('assets/weed.png', width: 120)),
-            child: Image.asset('assets/weed.png', width: 120),
+          // Header Text
+          Text(
+            _getWorkflowTitle(),
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 50),
+          const SizedBox(height: 10),
 
-          // DragTarget: Offener Grinder Boden
-          DragTarget<String>(
-            onAccept: (data) {
-              if (data == 'weed') {
-                setState(() => grinderSubstep = 1); // Weiter zu Phase 1: Schließen
-              }
-            },
-            builder: (context, candidateData, rejectedData) => Column(
+          // Fortschrittsbalken (nur beim Drehen sichtbar, sonst unsichtbar aber Platzhalter)
+          Opacity(
+            opacity: grinderSubstep == 2 ? 1.0 : 0.0,
+            child: Column(
               children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset('assets/grinder_base_open.png', width: 200), // BENÖTIGT NEUES BILD
-                    if (candidateData.isNotEmpty) const Icon(Icons.download, color: Colors.green, size: 80),
-                  ],
+                LinearProgressIndicator(
+                    value: (grindProgress / 25.0).clamp(0.0, 1.0),
+                    minHeight: 10,
+                    color: Colors.green,
+                    backgroundColor: Colors.white24
                 ),
-                const SizedBox(height: 10),
-                const Text("Hier hinein!", style: TextStyle(color: Colors.grey))
+                const SizedBox(height: 5),
+                Text(
+                    "${((grindProgress / 25.0).clamp(0.0, 1.0) * 100).toInt()}% gemahlen",
+                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)
+                ),
               ],
             ),
           ),
+
+          const Spacer(),
+
+          // --- OBEN: Der Deckel ---
+          SizedBox(
+            height: elementSize,
+            child: _buildTopSlot(),
+          ),
+
+          const SizedBox(height: 20),
+
+          // --- MITTE: Die Grinder-Unterseite ---
+          SizedBox(
+            height: elementSize,
+            child: _buildCenterSlot(),
+          ),
+
+          const SizedBox(height: 20),
+
+          // --- UNTEN: Das Gras ---
+          SizedBox(
+            height: elementSize,
+            child: _buildBottomSlot(),
+          ),
+
+          const Spacer(),
         ],
-      );
-    }
-
-    // Phase 1: Deckel aufsetzen
-    if (grinderSubstep == 1) {
-      return Column(
-        children: [
-          // Deckel zum Ziehen
-          Draggable<String>(
-            data: 'lid',
-            feedback: Image.asset('assets/grinder_top.png', width: 280), // BENÖTIGT VORHANDENES BILD
-            childWhenDragging: Opacity(opacity: 0.3, child: Image.asset('assets/grinder_top.png', width: 240)),
-            child: Image.asset('assets/grinder_top.png', width: 240),
-          ),
-          const SizedBox(height: 50),
-
-          // DragTarget: Gefüllter Grinder Boden
-          DragTarget<String>(
-            onAccept: (data) {
-              if (data == 'lid') {
-                setState(() => grinderSubstep = 2); // Weiter zu Phase 2: Mahlen
-              }
-            },
-            builder: (context, candidateData, rejectedData) => Column(
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Image.asset('assets/grinder_base_open.png', width: 200),
-                    if (candidateData.isNotEmpty) const Icon(Icons.vertical_align_bottom, color: Colors.green, size: 80),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                const Text("Zieh den Deckel drauf!", style: TextStyle(color: Colors.grey))
-              ],
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Phase 2: Mahlen (Rotation - wie im alten Schritt 3)
-    // Jetzt ist der Deckel drauf, wir drehen ihn.
-    double progressPercent = (grindProgress / 25.0).clamp(0.0, 1.0);
-    return Column(
-      children: [
-        // Fortschrittsanzeige in Grün (Passend zum Designbild)
-        LinearProgressIndicator(value: progressPercent, minHeight: 10, color: Colors.green, backgroundColor: Colors.white24),
-        const SizedBox(height: 10),
-        Text("${(progressPercent * 100).toInt()}% gemahlen", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 30),
-
-        // GestureDetector für die Dreh-Anstimation (auf dem Deckel-Bild)
-        GestureDetector(
-          onPanUpdate: (details) {
-            Offset center = const Offset(120, 120); // Zentrum des rotierten Widgets
-            double currentAngle = math.atan2(details.localPosition.dy - center.dy, details.localPosition.dx - center.dx);
-
-            double diff = currentAngle - lastAngle;
-            // Normalisierung bei Sprung von -PI zu PI
-            if (diff > math.pi) diff -= 2 * math.pi;
-            if (diff < -math.pi) diff += 2 * math.pi;
-
-            setState(() {
-              grinderRotation += diff;
-              grindProgress += diff.abs();
-              lastAngle = currentAngle;
-            });
-
-            // Wenn genug gemahlen wurde, Callback aufrufen um Hauptschritt zu beenden
-            if (grindProgress > 25.0) {
-              grindProgress = 25.0; // Am Anschlag halten
-              Future.delayed(const Duration(milliseconds: 500), widget.onCompleteAction);
-            }
-          },
-          onPanStart: (details) {
-            Offset center = const Offset(120, 120);
-            lastAngle = math.atan2(details.localPosition.dy - center.dy, details.localPosition.dx - center.dx);
-          },
-          child: Transform.rotate(
-            angle: grinderRotation,
-            // Hier nutzen wir das Deckel Bild, das wir rotiert haben
-            child: Image.asset('assets/grinder_top.png', width: 240),
-          ),
-        ),
-      ],
+      ),
     );
+  }
+
+  Widget _buildTopSlot() {
+    if (grinderSubstep == 0) {
+      // Phase 0: Deckel ist sichtbar, aber ausgegraut/halbtransparent, da man erst das Gras einfüllen muss
+      return Opacity(
+        opacity: 0.4,
+        child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
+      );
+    } else if (grinderSubstep == 1) {
+      // Phase 1: Deckel kann nun auf die Base gezogen werden
+      return Draggable<String>(
+        data: 'lid',
+        feedback: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
+        childWhenDragging: Opacity(
+            opacity: 0.2,
+            child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize)
+        ),
+        child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
+      );
+    } else {
+      // Phase 2: Deckel ist in der Mitte auf dem Grinder, hier oben ist nun leer
+      return const SizedBox();
+    }
+  }
+
+  Widget _buildCenterSlot() {
+    if (grinderSubstep == 0) {
+      // Phase 0: Base wartet auf Gras von unten
+      return DragTarget<String>(
+        onAccept: (data) {
+          if (data == 'weed') setState(() => grinderSubstep = 1);
+        },
+        builder: (context, candidateData, rejectedData) => Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
+            if (candidateData.isNotEmpty)
+              const Icon(Icons.arrow_upward, color: Colors.green, size: 60), // Zeigt an, dass es hier rein soll
+          ],
+        ),
+      );
+    } else if (grinderSubstep == 1) {
+      // Phase 1: Base hat Gras drin und wartet auf Deckel von oben
+      return DragTarget<String>(
+        onAccept: (data) {
+          if (data == 'lid') setState(() => grinderSubstep = 2);
+        },
+        builder: (context, candidateData, rejectedData) => Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
+            // Kleines Gras in der Base anzeigen, damit man sieht, es ist drin
+            Image.asset('assets/weed.png', width: elementSize * 0.6),
+            if (candidateData.isNotEmpty)
+              const Icon(Icons.arrow_downward, color: Colors.green, size: 60),
+          ],
+        ),
+      );
+    } else {
+      // Phase 2: Deckel ist auf der Base, wir können drehen! Alles bleibt in der Mitte.
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          // Base unten
+          Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
+          // Rotierender Deckel oben drauf
+          GestureDetector(
+            onPanUpdate: (details) {
+              Offset center = Offset(elementSize / 2, elementSize / 2);
+              double currentAngle = math.atan2(
+                  details.localPosition.dy - center.dy,
+                  details.localPosition.dx - center.dx
+              );
+
+              double diff = currentAngle - lastAngle;
+              if (diff > math.pi) diff -= 2 * math.pi;
+              if (diff < -math.pi) diff += 2 * math.pi;
+
+              setState(() {
+                grinderRotation += diff;
+                grindProgress += diff.abs();
+                lastAngle = currentAngle;
+              });
+
+              if (grindProgress > 25.0) {
+                grindProgress = 25.0;
+                Future.delayed(const Duration(milliseconds: 500), widget.onCompleteAction);
+              }
+            },
+            onPanStart: (details) {
+              Offset center = Offset(elementSize / 2, elementSize / 2);
+              lastAngle = math.atan2(
+                  details.localPosition.dy - center.dy,
+                  details.localPosition.dx - center.dx
+              );
+            },
+            child: Transform.rotate(
+              angle: grinderRotation,
+              child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
+            ),
+          ),
+        ],
+      );
+    }
+  }
+
+  Widget _buildBottomSlot() {
+    if (grinderSubstep == 0) {
+      // Phase 0: Gras ist unten und kann hochgezogen werden
+      return Draggable<String>(
+        data: 'weed',
+        feedback: Image.asset('assets/weed.png', width: elementSize * 0.8),
+        childWhenDragging: Opacity(
+            opacity: 0.2,
+            child: Image.asset('assets/weed.png', width: elementSize * 0.8)
+        ),
+        child: Image.asset('assets/weed.png', width: elementSize * 0.8),
+      );
+    } else {
+      // Phase 1 & 2: Gras wurde bereits hochgezogen, dieser Platz ist nun leer
+      return const SizedBox();
+    }
   }
 }
