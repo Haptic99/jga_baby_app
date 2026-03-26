@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import 'baby_controller.dart';
 import 'smoke_minigame_screen.dart';
 
@@ -13,12 +14,22 @@ void main() {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
           useMaterial3: true,
+          fontFamily: 'Nunito', // Nutzt Standard-Font, bis du Custom Fonts einbindest
         ),
         home: const BabyHomeScreen(),
       ),
     ),
   );
 }
+
+// Hilfsliste für den "Text-Outline" Effekt (schwarze Ränder um weißen Text)
+const List<Shadow> outlineShadows = [
+  Shadow(offset: Offset(-2, -2), color: Colors.black),
+  Shadow(offset: Offset(2, -2), color: Colors.black),
+  Shadow(offset: Offset(-2, 2), color: Colors.black),
+  Shadow(offset: Offset(2, 2), color: Colors.black),
+  Shadow(offset: Offset(0, 3), color: Colors.black),
+];
 
 class BabyHomeScreen extends StatelessWidget {
   const BabyHomeScreen({super.key});
@@ -27,104 +38,359 @@ class BabyHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final baby = Provider.of<BabyController>(context);
 
+    // Zeige den Todesbildschirm, wenn das Baby tot ist
+    if (!baby.isAlive) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: _buildDeathUI(context, baby)),
+      );
+    }
+
+    // Hauptmenü-UI
     return Scaffold(
-      backgroundColor: baby.isAlive ? const Color(0xFFF5F5F5) : Colors.black,
-      appBar: AppBar(
-        title: const Text("🍼 JGA Baby-Watch 2026"),
-        backgroundColor: baby.isAlive ? Colors.orange : Colors.grey[900],
-        foregroundColor: Colors.white,
-        centerTitle: true,
-      ),
       body: Stack(
         children: [
-          Center(
-            child: baby.isAlive ? _buildLivingUI(context, baby) : _buildDeathUI(context, baby),
-          ),
-          if (baby.isAlive)
-            Positioned(
-              bottom: 40,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ElevatedButton.icon(
-                  onPressed: () => _showStats(context, baby),
-                  icon: const Icon(Icons.bar_chart),
-                  label: const Text("Statistiken"),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                    backgroundColor: Colors.blueGrey,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
+          // 1. Hintergrund-Gradient
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFFFF5E00), Color(0xFFB026FF)],
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  void _showStats(BuildContext context, BabyController baby) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(30),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text("JGA Statistik", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              const Divider(),
-              _statRow(Icons.account_balance_wallet, "Schulden:", "${baby.debt.toStringAsFixed(2)} CHF", Colors.red),
-              _statRow(Icons.fastfood, "Döner gegessen:", "${baby.donersEaten}", Colors.orange),
-              _statRow(Icons.smoke_free, "Joints gepafft:", "${baby.jointsSmoked}", Colors.green),
-              _statRow(Icons.sentiment_very_dissatisfied, "Todesfälle:", "${baby.deathsCount}", Colors.black),
-              const SizedBox(height: 20),
-            ],
           ),
-        );
-      },
-    );
-  }
+          // 2. Punktemuster Overlay
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.5,
+              child: CustomPaint(painter: DottedPatternPainter()),
+            ),
+          ),
+          // 3. Hauptinhalt
+          SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _buildHeader(),
+                            const SizedBox(height: 24),
+                            _buildStatusBars(baby),
+                            const SizedBox(height: 24),
 
-  Widget _statRow(IconData icon, String label, String value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Row(children: [Icon(icon, color: color), const SizedBox(width: 15), Text(label, style: const TextStyle(fontSize: 16))]),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            // Nimmt den übrigen Platz ein
+                            Expanded(child: Center(child: _buildFamilyPhoto())),
+
+                            const SizedBox(height: 24),
+                            _buildActionButtons(context, baby),
+                            const SizedBox(height: 24),
+                            _buildStatsPanel(baby),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildLivingUI(BuildContext context, BabyController baby) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // NEU: Hier wird das Familienfoto angezeigt
-        Image.asset('assets/family_boro.png', height: 250, fit: BoxFit.contain),
-        const SizedBox(height: 20),
-        _statusSlider("Mageninhalt (Döner)", baby.hunger, Colors.red),
-        _statusSlider("Chill-Faktor (🥦)", baby.chillLevel, Colors.green),
-        const SizedBox(height: 50),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _actionBtn("Döner", Icons.fastfood, Colors.orange, () => baby.feed(20)),
-            _actionBtn("Joint", Icons.smoke_free, Colors.green, () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
-            }),
-          ],
+  Widget _buildHeader() {
+    return Transform.rotate(
+      angle: -0.017, // ca. -1 Grad rotiert
+      child: const Text(
+        "JGA Baby-Watch Home",
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 32,
+          fontWeight: FontWeight.w900,
+          color: Colors.white,
+          letterSpacing: 1.5,
+          shadows: outlineShadows,
         ),
-        const SizedBox(height: 120),
+      ),
+    );
+  }
+
+  Widget _buildStatusBars(BabyController baby) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildSingleProgressBar(
+            title: "Mageninhalt (Döner)",
+            emoji: "🌯",
+            percentage: baby.hunger,
+            color: Colors.orange,
+            label: "${baby.hunger.toInt()}% Full",
+            emojiOffset: -10,
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildSingleProgressBar(
+            title: "Chill-Faktor",
+            emoji: "🌿",
+            percentage: baby.chillLevel,
+            color: Colors.green,
+            label: "${baby.chillLevel.toInt()}% Zen",
+            emojiOffset: -18,
+          ),
+        ),
       ],
     );
   }
 
+  Widget _buildSingleProgressBar({
+    required String title,
+    required String emoji,
+    required double percentage,
+    required Color color,
+    required String label,
+    required double emojiOffset,
+  }) {
+    return Column(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            shadows: outlineShadows,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.centerLeft,
+          children: [
+            Container(
+              height: 24,
+              margin: const EdgeInsets.only(left: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.black, width: 3),
+                boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 3))],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(9),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: percentage / 100,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: color,
+                        border: const Border(right: BorderSide(color: Colors.black, width: 3)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned(
+              left: emojiOffset,
+              child: Text(emoji, style: const TextStyle(fontSize: 48)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+              shadows: outlineShadows,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFamilyPhoto() {
+    return Transform.rotate(
+      angle: 0.017, // ~1 Grad rotiert
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.purple[800],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black, width: 2),
+          boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(0, 6))],
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Container(
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              color: Colors.purple[900],
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: Colors.black, width: 2),
+            ),
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  // Bestehendes Foto aus deinen Assets
+                  Image.asset('assets/family_boro.png', fit: BoxFit.cover),
+                  // Halbtransparentes Overlay und Text für den Effekt
+                  Container(color: Colors.black.withOpacity(0.2)),
+                  const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text("📷", style: TextStyle(fontSize: 48)),
+                      Text(
+                        "FAMILY PHOTO",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                          shadows: outlineShadows,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context, BabyController baby) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildBrutalistButton(
+            text: "Döner essen",
+            emoji: "🌯",
+            color: Colors.orange,
+            onTap: () => baby.feed(20),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildBrutalistButton(
+            text: "Joint rauchen",
+            emoji: "🌿",
+            color: Colors.green,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBrutalistButton({
+    required String text,
+    required String emoji,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.black, width: 3),
+          boxShadow: const [BoxShadow(color: Colors.black54, offset: Offset(0, 6))],
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 40)),
+            const SizedBox(height: 8),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                shadows: [
+                  Shadow(offset: Offset(-1, -1), color: Colors.black),
+                  Shadow(offset: Offset(1, -1), color: Colors.black),
+                  Shadow(offset: Offset(-1, 1), color: Colors.black),
+                  Shadow(offset: Offset(1, 1), color: Colors.black),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatsPanel(BabyController baby) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.black.withOpacity(0.1)),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          _buildStatItem("💰", "Schulden\nin CHF", baby.debt.toStringAsFixed(2)),
+          _buildStatItem("🌯", "Gegessene\nDöner", "${baby.donersEaten}"),
+          _buildStatItem("🌿", "Gerauchte\nJoints", "${baby.jointsSmoked}"),
+          _buildStatItem("☠️", "Todesfälle", "${baby.deathsCount}"),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String emoji, String label, String value) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 32)),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, height: 1.1, color: Colors.black87),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Die bestehende "Todes-UI" - leicht angepasst an das neue Layout
   Widget _buildDeathUI(BuildContext context, BabyController baby) {
     final TextEditingController codeController = TextEditingController();
     return Padding(
@@ -133,49 +399,54 @@ class BabyHomeScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Text("💀", style: TextStyle(fontSize: 100)),
-          const Text("BABY TOT!", style: TextStyle(color: Colors.red, fontSize: 32, fontWeight: FontWeight.bold)),
+          const Text("BABY TOT!", style: TextStyle(color: Colors.red, fontSize: 36, fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
-          const Text("TRINK EINEN SHOT!\nDann Code eingeben:", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 16)),
-          const SizedBox(height: 20),
+          const Text("TRINK EINEN SHOT!\nDann Code eingeben:", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 18)),
+          const SizedBox(height: 30),
           TextField(
             controller: codeController,
             style: const TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
             decoration: const InputDecoration(
-              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+              enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white, width: 2)),
+              focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.orange, width: 2)),
               labelText: "Geheimcode",
-              labelStyle: TextStyle(color: Colors.white),
+              labelStyle: TextStyle(color: Colors.white70),
             ),
           ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () => baby.revive(codeController.text),
-            child: const Text("WIEDERBELEBEN"),
+          const SizedBox(height: 30),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () => baby.revive(codeController.text),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text("WIEDERBELEBEN", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _statusSlider(String title, double value, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          const SizedBox(height: 5),
-          LinearProgressIndicator(value: value / 100, minHeight: 12, borderRadius: BorderRadius.circular(10), color: color, backgroundColor: color.withOpacity(0.1)),
-        ],
-      ),
-    );
+// CustomPainter für das halbtransparente Punktemuster im Hintergrund
+class DottedPatternPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withOpacity(0.3);
+    const double spacing = 40.0; // Abstand der Punkte analog zum CSS "background-size"
+
+    for (double x = 0; x < size.width; x += spacing) {
+      for (double y = 0; y < size.height; y += spacing) {
+        canvas.drawCircle(Offset(x + spacing / 2, y + spacing / 2), 2, paint);
+      }
+    }
   }
 
-  Widget _actionBtn(String text, IconData icon, Color color, VoidCallback onTap) {
-    return ElevatedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon),
-      label: Text(text),
-      style: ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, padding: const EdgeInsets.all(15)),
-    );
-  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
