@@ -5,6 +5,15 @@ import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'baby_controller.dart';
 
+// Hilfsliste für den "Text-Outline" Effekt (schwarze Ränder um weißen Text)
+const List<Shadow> outlineShadows = [
+  Shadow(offset: Offset(-2, -2), color: Colors.black),
+  Shadow(offset: Offset(2, -2), color: Colors.black),
+  Shadow(offset: Offset(-2, 2), color: Colors.black),
+  Shadow(offset: Offset(2, 2), color: Colors.black),
+  Shadow(offset: Offset(0, 3), color: Colors.black),
+];
+
 class SmokeMinigameScreen extends StatefulWidget {
   const SmokeMinigameScreen({super.key});
 
@@ -13,9 +22,8 @@ class SmokeMinigameScreen extends StatefulWidget {
 }
 
 class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
-  // Das Spiel hat nun insgesamt 4 Hauptschritte: Chat(1), Grinden(2), Bauen(3), Übergeben(4).
   int step = 1;
-  bool isWeedInGrinder = false; // Wird intern im GrinderWorkflow gesetzt
+  bool isWeedInGrinder = false;
   bool babyGotJoint = false;
   double rollProgress = 0.0;
   StreamSubscription? _sensorSub;
@@ -58,20 +66,9 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[900], // Dark-Mode
-      appBar: AppBar(
-        // Angepasst auf 4 Gesamtschritte
-        title: Text("Vorbereitung - Schritt $step / 4"),
-        backgroundColor: Colors.green,
-        foregroundColor: Colors.white,
-      ),
-      // Bei Schritt 1 (Chat) nehmen wir die Padding-Ränder weg, damit es wie eine echte App aussieht
-      body: step == 1
-          ? _buildStepContent(baby)
-          : Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: _buildStepContent(baby),
-        ),
+      // Keine AppBar mehr für den cleanen Look!
+      body: SafeArea(
+        child: _buildStepContent(baby),
       ),
     );
   }
@@ -79,7 +76,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   Widget _buildStepContent(BabyController baby) {
     switch (step) {
       case 1:
-      // Chat Minigame mit "Weiter" Button
+      // Chat Minigame
         return _ChatMinigame(onCompleted: nextStep);
 
       case 2:
@@ -87,57 +84,70 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
         return _CombinedGrinderWorkflow(onCompleteAction: nextStep);
 
       case 3:
-      // Ehemals Schritt 4 (Joint schütteln)
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Drehe nun den Joint!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 10),
-            const Text("Schüttle das Handy kräftig", style: TextStyle(color: Colors.grey)),
-            const SizedBox(height: 40),
-            LinearProgressIndicator(value: rollProgress.clamp(0, 1), minHeight: 25, borderRadius: BorderRadius.circular(15), color: Colors.green, backgroundColor: Colors.white24),
-            const SizedBox(height: 40),
-            Image.asset('assets/joint_unlit.png', width: 220),
-          ],
+      // Joint schütteln
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Drehe nun den Joint!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 10),
+                const Text("Schüttle das Handy kräftig", style: TextStyle(color: Colors.grey)),
+                const SizedBox(height: 40),
+                LinearProgressIndicator(value: rollProgress.clamp(0, 1), minHeight: 25, borderRadius: BorderRadius.circular(15), color: Colors.green, backgroundColor: Colors.white24),
+                const SizedBox(height: 40),
+                Image.asset('assets/joint_unlit.png', width: 220),
+              ],
+            ),
+          ),
         );
 
       case 4:
-      // Ehemals Schritt 5 (Übergeben an Baby)
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text("Zieh den Joint zum Baby!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 50),
-            if (!babyGotJoint)
-              Draggable<String>(
-                data: 'joint',
-                feedback: Image.asset('assets/joint_lit.png', width: 240),
-                childWhenDragging: Opacity(opacity: 0.2, child: Image.asset('assets/joint_lit.png', width: 200)),
-                child: Image.asset('assets/joint_lit.png', width: 200),
-              )
-            else
-              const SizedBox(height: 200),
-            const SizedBox(height: 50),
-            DragTarget<String>(
-              onAccept: (data) {
-                if (data == 'joint') {
-                  setState(() => babyGotJoint = true);
-                  baby.smoke(40);
-                  // Spiel beenden und zurück zum Homescreen
-                  Future.delayed(const Duration(milliseconds: 1200), () => Navigator.pop(context));
-                }
-              },
-              builder: (context, candidateData, rejectedData) => Column(
-                children: [
-                  Image.asset('assets/baby.png', height: 200, fit: BoxFit.contain),
-                  if (candidateData.isNotEmpty) const Text("GIB MIR!", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 20))
-                ],
-              ),
+      // Übergeben an Baby
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Zieh den Joint zum Baby!", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 50),
+                if (!babyGotJoint)
+                  Draggable<String>(
+                    data: 'joint',
+                    feedback: Material(
+                      color: Colors.transparent,
+                      child: Image.asset('assets/joint_lit.png', width: 240),
+                    ),
+                    childWhenDragging: Opacity(opacity: 0.2, child: Image.asset('assets/joint_lit.png', width: 200)),
+                    child: Image.asset('assets/joint_lit.png', width: 200),
+                  )
+                else
+                  const SizedBox(height: 200),
+                const SizedBox(height: 50),
+                DragTarget<String>(
+                  onAccept: (data) {
+                    if (data == 'joint') {
+                      setState(() => babyGotJoint = true);
+                      baby.smoke(40);
+                      // Spiel beenden und zurück zum Homescreen
+                      Future.delayed(const Duration(milliseconds: 1200), () => Navigator.pop(context));
+                    }
+                  },
+                  builder: (context, candidateData, rejectedData) => Column(
+                    children: [
+                      Image.asset('assets/baby.png', height: 200, fit: BoxFit.contain),
+                      if (candidateData.isNotEmpty) const Text("GIB MIR!", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 20))
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         );
       default:
-        return const Text("Fehler.", style: TextStyle(color: Colors.white));
+        return const Center(child: Text("Fehler.", style: TextStyle(color: Colors.white)));
     }
   }
 }
@@ -169,41 +179,33 @@ class _ChatMinigameState extends State<_ChatMinigame> {
   }
 
   void _handleSend() async {
-    // Senden nur erlauben, wenn Boro nicht schreibt, Text bereitsteht und der Weiter-Button noch nicht da ist
     if (isBoroTyping || chatStage > 2 || !showNextUserInput || showContinueButton) return;
 
-    // 1. User Nachricht in den Chat einfügen
     final userMsg = currentInputText;
     setState(() {
       messages.insert(0, {"sender": "user", "text": userMsg});
       showNextUserInput = false;
     });
 
-    // Wenn es die letzte Nachricht war, beenden wir den Sende-Workflow hier
-    // und blenden nach einer kurzen Verzögerung den "Weiter"-Button ein.
     if (chatStage == 2) {
       setState(() => chatStage++);
-      Future.delayed(const Duration(milliseconds: 1000), () {
+      Future.delayed(const Duration(milliseconds: 100), () {
         setState(() => showContinueButton = true);
       });
       return;
     }
 
-    // 2. "Boro schreibt..." aktivieren und Phase intern hochzählen
     setState(() {
       isBoroTyping = true;
       chatStage++;
     });
 
-    // 3. Warten (Delay 1.5s)
-    await Future.delayed(const Duration(milliseconds: 1500));
+    await Future.delayed(const Duration(milliseconds: 100));
 
-    // 4. Boros Antwort generieren
     String boroReply = "";
     if (chatStage == 1) boroReply = "Ehy you stimmt, wie schwer sind die nomel gsi?";
     if (chatStage == 2) boroReply = "Ah easy kein stress wenn chunsches go holle?";
 
-    // 5. Boros Antwort einfügen und User-Input wieder freischalten
     setState(() {
       isBoroTyping = false;
       messages.insert(0, {"sender": "boro", "text": boroReply});
@@ -232,7 +234,13 @@ class _ChatMinigameState extends State<_ChatMinigame> {
                 backgroundColor: Colors.grey,
               ),
               const SizedBox(width: 12),
-              const Text("Boro", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Boro", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                  Text("Online", style: TextStyle(color: Colors.green[400], fontSize: 13, fontWeight: FontWeight.w600)),
+                ],
+              ),
             ],
           ),
         ),
@@ -242,7 +250,7 @@ class _ChatMinigameState extends State<_ChatMinigame> {
           child: Container(
             color: Colors.black26,
             child: ListView.builder(
-              reverse: true, // Unten anfangen
+              reverse: true,
               padding: const EdgeInsets.symmetric(vertical: 16),
               itemCount: messages.length,
               itemBuilder: (context, index) {
@@ -262,7 +270,7 @@ class _ChatMinigameState extends State<_ChatMinigame> {
             child: const Text("Boro schreibt...", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
           ),
 
-        // Der "Weiter" Button erscheint hier, wenn der Chat zu Ende ist
+        // Der "Weiter" Button
         if (showContinueButton)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -323,7 +331,6 @@ class _ChatMinigameState extends State<_ChatMinigame> {
   }
 }
 
-// Widget für eine einzelne animierte Chat-Bubble
 class _ChatBubble extends StatelessWidget {
   final String text;
   final bool isUser;
@@ -368,10 +375,8 @@ class _ChatBubble extends StatelessWidget {
   }
 }
 
-
 // ---------------------------------------------------------
 // Kombinierter Grinder-Action Workflow (Fill -> Close -> Grind)
-// ALLES AUF EINEM SCREEN OHNE LAYOUT-SPRÜNGE
 // ---------------------------------------------------------
 
 class _CombinedGrinderWorkflow extends StatefulWidget {
@@ -383,82 +388,99 @@ class _CombinedGrinderWorkflow extends StatefulWidget {
 }
 
 class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
-  // 0 = Gras in Grinder ziehen, 1 = Deckel auf Grinder ziehen, 2 = Mahlen
   int grinderSubstep = 0;
-
   double grinderRotation = 0.0;
   double grindProgress = 0.0;
   double lastAngle = 0.0;
-
   bool _isFinished = false;
 
-  // Einheitliche feste Größe für Grinder-Top und Grinder-Base
-  final double elementSize = 180.0;
+  final double elementSize = 234.0;
 
   String _getWorkflowTitle() {
-    if (grinderSubstep == 0) return "SCHRITT 2/4:\nGRAS IN DEN GRINDER FÜLLEN";
-    if (grinderSubstep == 1) return "SCHRITT 2/4:\nDECKEL AUFSETZEN";
-    return "SCHRITT 2/4:\nGRINDER DREHEN";
+    if (grinderSubstep == 0) return "GRAS IN GRINDER ZIEHEN";
+    if (grinderSubstep == 1) return "DECKEL AUFSETZEN";
+    return "GRINDER DREHEN";
   }
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        image: DecorationImage(
+          // Neues Hintergrundbild
+          image: AssetImage('assets/joint_mini_game_background.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
       child: Column(
         children: [
-          // Header Text
+          const SizedBox(height: 20),
+          // Brutalistischer Header Text (angepasst an das Design)
           Text(
             _getWorkflowTitle(),
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-
-          // Fortschrittsbalken (nur beim Drehen sichtbar, sonst unsichtbar aber Platzhalter)
-          Opacity(
-            opacity: grinderSubstep == 2 ? 1.0 : 0.0,
-            child: Column(
-              children: [
-                LinearProgressIndicator(
-                    value: (grindProgress / 25.0).clamp(0.0, 1.0),
-                    minHeight: 10,
-                    color: Colors.green,
-                    backgroundColor: Colors.white24
-                ),
-                const SizedBox(height: 5),
-                Text(
-                    "${((grindProgress / 25.0).clamp(0.0, 1.0) * 100).toInt()}% gemahlen",
-                    style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)
-                ),
-              ],
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+              shadows: outlineShadows,
+              letterSpacing: 1.5,
             ),
+            textAlign: TextAlign.center,
           ),
 
           const Spacer(),
 
           // --- OBEN: Der Deckel ---
-          SizedBox(
-            height: elementSize,
-            child: _buildTopSlot(),
-          ),
-
+          SizedBox(height: elementSize, child: _buildTopSlot()),
           const SizedBox(height: 20),
 
           // --- MITTE: Die Grinder-Unterseite ---
-          SizedBox(
-            height: elementSize,
-            child: _buildCenterSlot(),
-          ),
-
+          SizedBox(height: elementSize, child: _buildCenterSlot()),
           const SizedBox(height: 20),
 
           // --- UNTEN: Das Gras ---
-          SizedBox(
-            height: elementSize,
-            child: _buildBottomSlot(),
-          ),
+          SizedBox(height: elementSize, child: _buildBottomSlot()),
 
           const Spacer(),
+
+          // Fortschrittsbalken im Brutalismus-Look unten!
+          Opacity(
+            opacity: grinderSubstep == 2 ? 1.0 : 0.0,
+            child: Column(
+              children: [
+                Text(
+                    "${((grindProgress / 25.0).clamp(0.0, 1.0) * 100).toInt()}% GEMAHLEN",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                      shadows: outlineShadows,
+                    )
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  width: 250,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.black, width: 3),
+                    boxShadow: const [BoxShadow(color: Colors.black26, offset: Offset(0, 3))],
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: LinearProgressIndicator(
+                        value: (grindProgress / 25.0).clamp(0.0, 1.0),
+                        color: Colors.green,
+                        backgroundColor: Colors.transparent
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -466,16 +488,17 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
 
   Widget _buildTopSlot() {
     if (grinderSubstep == 0) {
-      // Phase 0: Deckel ist sichtbar, aber ausgegraut/halbtransparent, da man erst das Gras einfüllen muss
       return Opacity(
         opacity: 0.4,
         child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
       );
     } else if (grinderSubstep == 1) {
-      // Phase 1: Deckel kann nun auf die Base gezogen werden
       return Draggable<String>(
         data: 'lid',
-        feedback: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
+        feedback: Material(
+          color: Colors.transparent,
+          child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
+        ),
         childWhenDragging: Opacity(
             opacity: 0.2,
             child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize)
@@ -483,14 +506,12 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
         child: Image.asset('assets/grinder_top.png', width: elementSize, height: elementSize),
       );
     } else {
-      // Phase 2: Deckel ist in der Mitte auf dem Grinder, hier oben ist nun leer
       return const SizedBox();
     }
   }
 
   Widget _buildCenterSlot() {
     if (grinderSubstep == 0) {
-      // Phase 0: Base wartet auf Gras von unten
       return DragTarget<String>(
         onAccept: (data) {
           if (data == 'weed') setState(() => grinderSubstep = 1);
@@ -500,12 +521,11 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
           children: [
             Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
             if (candidateData.isNotEmpty)
-              const Icon(Icons.arrow_upward, color: Colors.green, size: 60), // Zeigt an, dass es hier rein soll
+              const Icon(Icons.arrow_upward, color: Colors.green, size: 60),
           ],
         ),
       );
     } else if (grinderSubstep == 1) {
-      // Phase 1: Base hat Gras drin und wartet auf Deckel von oben
       return DragTarget<String>(
         onAccept: (data) {
           if (data == 'lid') setState(() => grinderSubstep = 2);
@@ -514,7 +534,6 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
           alignment: Alignment.center,
           children: [
             Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
-            // Kleines Gras in der Base anzeigen, damit man sieht, es ist drin
             Image.asset('assets/weed.png', width: elementSize * 0.6),
             if (candidateData.isNotEmpty)
               const Icon(Icons.arrow_downward, color: Colors.green, size: 60),
@@ -522,24 +541,18 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
         ),
       );
     } else {
-      // Phase 2: Deckel ist auf der Base, wir können drehen! Alles bleibt in der Mitte.
       return Stack(
         alignment: Alignment.center,
         children: [
-          // Base unten
           Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
-          // Rotierender Deckel oben drauf
           GestureDetector(
             onPanUpdate: (details) {
-              // <--- NEU: Abbrechen, wenn bereits fertig gemahlen wurde
               if (_isFinished) return;
-
               Offset center = Offset(elementSize / 2, elementSize / 2);
               double currentAngle = math.atan2(
                   details.localPosition.dy - center.dy,
                   details.localPosition.dx - center.dx
               );
-
               double diff = currentAngle - lastAngle;
               if (diff > math.pi) diff -= 2 * math.pi;
               if (diff < -math.pi) diff += 2 * math.pi;
@@ -550,9 +563,8 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
                 lastAngle = currentAngle;
               });
 
-              // <--- GEÄNDERT: Prüfen wir unser neues Flag ab
               if (grindProgress >= 25.0 && !_isFinished) {
-                _isFinished = true; // <--- NEU: Flag setzen, damit es nicht mehrfach auslöst
+                _isFinished = true;
                 grindProgress = 25.0;
                 Future.delayed(const Duration(milliseconds: 500), widget.onCompleteAction);
               }
@@ -576,10 +588,12 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
 
   Widget _buildBottomSlot() {
     if (grinderSubstep == 0) {
-      // Phase 0: Gras ist unten und kann hochgezogen werden
       return Draggable<String>(
         data: 'weed',
-        feedback: Image.asset('assets/weed.png', width: elementSize * 0.8),
+        feedback: Material(
+          color: Colors.transparent,
+          child: Image.asset('assets/weed.png', width: elementSize * 0.8),
+        ),
         childWhenDragging: Opacity(
             opacity: 0.2,
             child: Image.asset('assets/weed.png', width: elementSize * 0.8)
@@ -587,7 +601,6 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
         child: Image.asset('assets/weed.png', width: elementSize * 0.8),
       );
     } else {
-      // Phase 1 & 2: Gras wurde bereits hochgezogen, dieser Platz ist nun leer
       return const SizedBox();
     }
   }
