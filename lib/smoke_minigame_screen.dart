@@ -390,6 +390,8 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
   double grindProgress = 0.0;
   double lastAngle = 0.0;
 
+  bool _isFinished = false;
+
   // Einheitliche feste Größe für Grinder-Top und Grinder-Base
   final double elementSize = 180.0;
 
@@ -529,6 +531,9 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
           // Rotierender Deckel oben drauf
           GestureDetector(
             onPanUpdate: (details) {
+              // <--- NEU: Abbrechen, wenn bereits fertig gemahlen wurde
+              if (_isFinished) return;
+
               Offset center = Offset(elementSize / 2, elementSize / 2);
               double currentAngle = math.atan2(
                   details.localPosition.dy - center.dy,
@@ -545,7 +550,9 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
                 lastAngle = currentAngle;
               });
 
-              if (grindProgress > 25.0) {
+              // <--- GEÄNDERT: Prüfen wir unser neues Flag ab
+              if (grindProgress >= 25.0 && !_isFinished) {
+                _isFinished = true; // <--- NEU: Flag setzen, damit es nicht mehrfach auslöst
                 grindProgress = 25.0;
                 Future.delayed(const Duration(milliseconds: 500), widget.onCompleteAction);
               }
