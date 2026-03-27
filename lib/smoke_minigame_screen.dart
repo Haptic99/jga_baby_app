@@ -38,7 +38,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
   void _startRollingSensor() {
     _sensorSub?.cancel();
-    _sensorSub = userAccelerometerEvents.listen((event) {
+    _sensorSub = userAccelerometerEventStream().listen((event) {
       if (step != 3) return;
       double acceleration = math.sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
       if (acceleration > 13.0) {
@@ -218,12 +218,16 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
               Expanded(
                 child: Center(
                   child: DragTarget<String>(
-                    onAccept: (data) {
-                      if (data == 'joint') {
+                    onAcceptWithDetails: (details) {
+                      if (details.data == 'joint') {
                         setState(() => babyGotJoint = true);
                         baby.smoke(40);
                         // Spiel beenden und zurück zum Homescreen
-                        Future.delayed(const Duration(milliseconds: 1200), () => Navigator.pop(context));
+                        Future.delayed(const Duration(milliseconds: 1200), () {
+                          if (mounted) { // <-- Behebt die "BuildContext" Warnung!
+                            Navigator.pop(context);
+                          }
+                        });
                       }
                     },
                     builder: (context, candidateData, rejectedData) => Column(
@@ -620,8 +624,8 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
   Widget _buildCenterSlot() {
     if (grinderSubstep == 0) {
       return DragTarget<String>(
-        onAccept: (data) {
-          if (data == 'weed') setState(() => grinderSubstep = 1);
+        onAcceptWithDetails: (details) {
+          if (details.data == 'weed') setState(() => grinderSubstep = 1);
         },
         builder: (context, candidateData, rejectedData) => Stack(
           alignment: Alignment.center,
@@ -634,8 +638,8 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
       );
     } else if (grinderSubstep == 1) {
       return DragTarget<String>(
-        onAccept: (data) {
-          if (data == 'lid') setState(() => grinderSubstep = 2);
+        onAcceptWithDetails: (details) {
+          if (details.data == 'lid') setState(() => grinderSubstep = 2);
         },
         builder: (context, candidateData, rejectedData) => Stack(
           alignment: Alignment.center,

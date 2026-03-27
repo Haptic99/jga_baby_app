@@ -109,7 +109,7 @@ class BabyHomeScreen extends StatelessWidget {
     return Transform.rotate(
       angle: -0.017, // ca. -1 Grad rotiert
       child: const Text(
-        "Mini Boro",
+        "Mini Boro Tamagochi",
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 32,
@@ -258,19 +258,6 @@ class BabyHomeScreen extends StatelessWidget {
                   Container(color: Colors.black.withValues(alpha: 0.2)),
                   const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("📷", style: TextStyle(fontSize: 48)),
-                      Text(
-                        "FAMILY PHOTO",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2,
-                          shadows: outlineShadows,
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
