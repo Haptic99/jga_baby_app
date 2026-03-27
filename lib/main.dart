@@ -243,22 +243,26 @@ class BabyHomeScreen extends StatelessWidget {
           child: Container(
             clipBehavior: Clip.hardEdge,
             decoration: BoxDecoration(
-              color: Colors.purple[900],
+              color: Colors.purple[900], // Das ist die Hintergrundfarbe, die um das kleinere Bild herum sichtbar wird
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: Colors.black, width: 2),
             ),
             child: AspectRatio(
-              aspectRatio: 4 / 3,
+              aspectRatio: 4 / 3, // Das Verhältnis des Rahmens bleibt groß und gleich
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Bestehendes Foto aus deinen Assets
-                  Image.asset('assets/family_boro.png', fit: BoxFit.cover),
-                  // Halbtransparentes Overlay und Text für den Effekt (Hier .withValues angewendet)
-                  Container(color: Colors.black.withValues(alpha: 0.2)),
-                  const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  // --- NEU: Bild verkleinert und zentriert IM Rahmen ---
+                  Center(
+                    child: FractionallySizedBox(
+                      widthFactor: 0.95, // Macht das Bild auf 70% (also 30% kleiner) der inneren Breite
+                      heightFactor: 0.95, // Macht das Bild auch in der Höhe 30% kleiner
+                      child: Image.asset('assets/family_boro.png', fit: BoxFit.cover),
+                    ),
                   ),
+                  // ---------------------------------------------------
+                  // Halbtransparentes Overlay über den gesamten inneren Bereich
+                  Container(color: Colors.black.withValues(alpha: 0.2)),
                 ],
               ),
             ),

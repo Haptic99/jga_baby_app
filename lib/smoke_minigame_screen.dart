@@ -28,6 +28,33 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   double rollProgress = 0.0;
   StreamSubscription? _sensorSub;
 
+  // --- NEUE TIMER VARIABLEN ---
+  Timer? _gameTimer;
+  int _timeRemaining = 35; // Zeit in Sekunden (kannst du anpassen)
+  final int _totalTime = 35;
+  bool _timeUp = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _startGameTimer();
+  }
+
+  void _startGameTimer() {
+    _gameTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_timeRemaining > 0) {
+        setState(() {
+          _timeRemaining--;
+        });
+      } else {
+        _gameTimer?.cancel();
+        setState(() {
+          _timeUp = true; // Zeit abgelaufen
+        });
+      }
+    });
+  }
+
   void nextStep() {
     setState(() {
       step++;
@@ -57,7 +84,47 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   @override
   void dispose() {
     _sensorSub?.cancel();
+    _gameTimer?.cancel(); // Wichtig: Timer beim Verlassen aufräumen
     super.dispose();
+  }
+
+  // --- STRAFEN DIALOG ---
+  void _showPenaltyDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Colors.black,
+        shape: RoundedRectangleBorder(
+          side: const BorderSide(color: Colors.red, width: 3),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: const Text(
+          "💀 ZEIT ABGELAUFEN!",
+          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w900, fontSize: 24, shadows: outlineShadows),
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          "Du warst zu langsam!\n\nTRINK EINEN SHOT\nODER ISS EIN EDIBLE!",
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx); // Dialog schließen
+              Navigator.pop(context); // Minispiel verlassen -> zurück zum Homescreen
+            },
+            child: const Text("ERLEDIGT", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -66,9 +133,49 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[900], // Dark-Mode
-      // Keine AppBar mehr für den cleanen Look!
       body: SafeArea(
-        child: _buildStepContent(baby),
+        child: Column(
+          children: [
+            _buildTimerBar(), // Timer-Balken oben
+            Expanded(child: _buildStepContent(baby)), // Hauptinhalt nimmt den restlichen Platz ein
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimerBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      color: Colors.black54,
+      child: Column(
+        children: [
+          Text(
+            _timeUp ? "ZEIT ABGELAUFEN! STRAFE WARTET!" : "ZEIT: $_timeRemaining s",
+            style: TextStyle(
+              color: _timeUp ? Colors.red : Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+              shadows: outlineShadows,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            height: 12,
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black, width: 2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: _timeRemaining / _totalTime,
+                backgroundColor: Colors.grey[800],
+                color: _timeRemaining > 10 ? Colors.green : Colors.red,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -80,11 +187,11 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
         return _ChatMinigame(onCompleted: nextStep);
 
       case 2:
-      // Kombinierter Grinder-Action-Screen ( Fill -> Close -> Grind )
+      // Kombinierter Grinder-Action-Screen
         return _CombinedGrinderWorkflow(onCompleteAction: nextStep);
 
       case 3:
-      // Joint schütteln (im neuen Brutalismus-Design)
+      // Joint schütteln
         return Container(
           width: double.infinity,
           decoration: const BoxDecoration(
@@ -96,7 +203,6 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
           child: Column(
             children: [
               const SizedBox(height: 20),
-              // Header
               const Text(
                 "JOINT DREHEN",
                 style: TextStyle(
@@ -122,12 +228,10 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
               const Spacer(),
 
-              // Unlit Joint Image
               Image.asset('assets/joint_unlit.png', width: 250),
 
               const Spacer(),
 
-              // Fortschrittsbalken im Brutalismus-Look unten
               Text(
                   "${(rollProgress.clamp(0.0, 1.0) * 100).toInt()}% GEDREHT",
                   style: const TextStyle(
@@ -162,7 +266,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
         );
 
       case 4:
-      // Übergeben an Baby (Zentriertes Layout mit größerem Baby)
+      // Übergeben an Baby
         return Container(
           width: double.infinity,
           decoration: const BoxDecoration(
@@ -173,7 +277,6 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
           ),
           child: Column(
             children: [
-              // Header (bleibt oben)
               const SizedBox(height: 20),
               const Text(
                 "JOINT ÜBERGEBEN",
@@ -200,7 +303,6 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
               const SizedBox(height: 30),
 
-              // Der Joint zum Ziehen (jetzt oben)
               if (!babyGotJoint)
                 Draggable<String>(
                   data: 'joint',
@@ -212,9 +314,8 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
                   child: Image.asset('assets/joint_lit.png', width: 200),
                 )
               else
-                const SizedBox(height: 50), // Kleinerer Platzhalter oben
+                const SizedBox(height: 50),
 
-              // Hauptinhalt zentriert (Baby)
               Expanded(
                 child: Center(
                   child: DragTarget<String>(
@@ -222,16 +323,23 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
                       if (details.data == 'joint') {
                         setState(() => babyGotJoint = true);
                         baby.smoke(40);
-                        // Spiel beenden und zurück zum Homescreen
+
+                        _gameTimer?.cancel(); // Timer stoppen, Aufgabe ist erledigt
+
+                        // Spiel beenden und entsprechend reagieren
                         Future.delayed(const Duration(milliseconds: 1200), () {
-                          if (mounted) { // <-- Behebt die "BuildContext" Warnung!
-                            Navigator.pop(context);
+                          if (mounted) {
+                            if (_timeUp) {
+                              _showPenaltyDialog(); // Strafe anzeigen, falls Zeit abgelaufen
+                            } else {
+                              Navigator.pop(context); // Normal zurück zum Homescreen
+                            }
                           }
                         });
                       }
                     },
                     builder: (context, candidateData, rejectedData) => Column(
-                      mainAxisSize: MainAxisSize.min, // Inhalt zentrieren
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset(
                             'assets/baby.png',
@@ -519,7 +627,6 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
       width: double.infinity,
       decoration: const BoxDecoration(
         image: DecorationImage(
-          // Neues Hintergrundbild
           image: AssetImage('assets/joint_mini_game_background.png'),
           fit: BoxFit.cover,
         ),
@@ -527,7 +634,6 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          // Brutalistischer Header Text (angepasst an das Design)
           Text(
             _getWorkflowTitle(),
             style: const TextStyle(
@@ -555,7 +661,6 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
 
           const Spacer(),
 
-          // Fortschrittsbalken im Brutalismus-Look unten!
           Opacity(
             opacity: grinderSubstep == 2 ? 1.0 : 0.0,
             child: Column(
