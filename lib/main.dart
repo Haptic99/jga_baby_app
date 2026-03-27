@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'dart:math' as math;
 import 'baby_controller.dart';
 import 'smoke_minigame_screen.dart';
 
@@ -255,8 +254,8 @@ class BabyHomeScreen extends StatelessWidget {
                 children: [
                   // Bestehendes Foto aus deinen Assets
                   Image.asset('assets/family_boro.png', fit: BoxFit.cover),
-                  // Halbtransparentes Overlay und Text für den Effekt
-                  Container(color: Colors.black.withOpacity(0.2)),
+                  // Halbtransparentes Overlay und Text für den Effekt (Hier .withValues angewendet)
+                  Container(color: Colors.black.withValues(alpha: 0.2)),
                   const Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -361,7 +360,8 @@ class BabyHomeScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withOpacity(0.1)),
+        // Hier .withValues angewendet
+        border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
       ),
       child: Row(
@@ -445,7 +445,8 @@ class BabyHomeScreen extends StatelessWidget {
 class DottedPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.3);
+    // Hier .withValues angewendet
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.3);
     const double spacing = 40.0; // Abstand der Punkte analog zum CSS "background-size"
 
     for (double x = 0; x < size.width; x += spacing) {
