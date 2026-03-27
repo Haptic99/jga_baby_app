@@ -110,7 +110,7 @@ class BabyHomeScreen extends StatelessWidget {
     return Transform.rotate(
       angle: -0.017, // ca. -1 Grad rotiert
       child: const Text(
-        "JGA Baby-Watch Home",
+        "Mini Boro",
         textAlign: TextAlign.center,
         style: TextStyle(
           fontSize: 32,
@@ -128,7 +128,7 @@ class BabyHomeScreen extends StatelessWidget {
       children: [
         Expanded(
           child: _buildSingleProgressBar(
-            title: "Mageninhalt (Döner)",
+            title: "Mageninhalt",
             iconWidget: const Text("🌯", style: TextStyle(fontSize: 48)),
             percentage: baby.hunger,
             color: Colors.orange,
