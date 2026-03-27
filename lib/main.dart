@@ -129,22 +129,23 @@ class BabyHomeScreen extends StatelessWidget {
         Expanded(
           child: _buildSingleProgressBar(
             title: "Mageninhalt (Döner)",
-            emoji: "🌯",
+            iconWidget: const Text("🌯", style: TextStyle(fontSize: 48)),
             percentage: baby.hunger,
             color: Colors.orange,
             label: "${baby.hunger.toInt()}% Full",
-            emojiOffset: -10,
+            iconOffset: -10,
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
           child: _buildSingleProgressBar(
             title: "Chill-Faktor",
-            emoji: "🌿",
+            // Das Bild wird hier als iconWidget übergeben und deutlich kleiner dargestellt (height 30)
+            iconWidget: Image.asset('assets/weed_leaf.png', height: 80),
             percentage: baby.chillLevel,
             color: Colors.green,
             label: "${baby.chillLevel.toInt()}% Zen",
-            emojiOffset: -18,
+            iconOffset: -20,
           ),
         ),
       ],
@@ -153,11 +154,11 @@ class BabyHomeScreen extends StatelessWidget {
 
   Widget _buildSingleProgressBar({
     required String title,
-    required String emoji,
+    required Widget iconWidget,
     required double percentage,
     required Color color,
     required String label,
-    required double emojiOffset,
+    required double iconOffset,
   }) {
     return Column(
       children: [
@@ -201,8 +202,8 @@ class BabyHomeScreen extends StatelessWidget {
               ),
             ),
             Positioned(
-              left: emojiOffset,
-              child: Text(emoji, style: const TextStyle(fontSize: 48)),
+              left: iconOffset,
+              child: iconWidget,
             ),
           ],
         ),
@@ -287,7 +288,7 @@ class BabyHomeScreen extends StatelessWidget {
         Expanded(
           child: _buildBrutalistButton(
             text: "Döner essen",
-            emoji: "🌯",
+            iconWidget: const Text("🌯", style: TextStyle(fontSize: 40)),
             color: Colors.orange,
             onTap: () => baby.feed(20),
           ),
@@ -296,7 +297,8 @@ class BabyHomeScreen extends StatelessWidget {
         Expanded(
           child: _buildBrutalistButton(
             text: "Joint rauchen",
-            emoji: "🌿",
+            // Das Bild hier ebenfalls anstelle des Emojis, kleiner und zentriert
+            iconWidget: Image.asset('assets/weed_leaf.png', height: 1000),
             color: Colors.green,
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
@@ -309,7 +311,7 @@ class BabyHomeScreen extends StatelessWidget {
 
   Widget _buildBrutalistButton({
     required String text,
-    required String emoji,
+    required Widget iconWidget,
     required Color color,
     required VoidCallback onTap,
   }) {
@@ -325,7 +327,12 @@ class BabyHomeScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 40)),
+            // SizedBox sorgt dafür, dass die Emojis und Bilder unabhängig von ihrer eigenen Größe
+            // denselben Platz einnehmen und die darunter liegenden Texte auf der exakt gleichen Höhe bleiben
+            SizedBox(
+              height: 48,
+              child: Center(child: iconWidget),
+            ),
             const SizedBox(height: 8),
             Text(
               text,
@@ -360,20 +367,21 @@ class BabyHomeScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildStatItem("💰", "Schulden\nin CHF", baby.debt.toStringAsFixed(2)),
-          _buildStatItem("🌯", "Gegessene\nDöner", "${baby.donersEaten}"),
-          _buildStatItem("🌿", "Gerauchte\nJoints", "${baby.jointsSmoked}"),
-          _buildStatItem("☠️", "Todesfälle", "${baby.deathsCount}"),
+          _buildStatItem(const Text("💰", style: TextStyle(fontSize: 32)), "Schulden\nin CHF", baby.debt.toStringAsFixed(2)),
+          _buildStatItem(const Text("🌯", style: TextStyle(fontSize: 32)), "Gegessene\nDöner", "${baby.donersEaten}"),
+          _buildStatItem(Image.asset('assets/weed_leaf.png', height: 28), "Gerauchte\nJoints", "${baby.jointsSmoked}"),
+          _buildStatItem(const Text("☠️", style: TextStyle(fontSize: 32)), "Todesfälle", "${baby.deathsCount}"),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String emoji, String label, String value) {
+  Widget _buildStatItem(Widget iconWidget, String label, String value) {
     return Expanded(
       child: Column(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 32)),
+          // SizedBox für einheitliche Höhe der Icons/Bilder in der Leiste
+          SizedBox(height: 40, child: Center(child: iconWidget)),
           const SizedBox(height: 4),
           Text(
             label,
