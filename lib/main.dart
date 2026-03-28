@@ -1,9 +1,21 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:alarm/alarm.dart';
 import 'baby_controller.dart';
 import 'smoke_minigame_screen.dart';
+import 'gin_minigame_screen.dart';
+import 'stats_screen.dart';
 
-void main() {
+// Dummy-Screen für den klingelnden Alarm
+import 'alarm_ring_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialisiere den Alarm-Service
+  await Alarm.init();
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => BabyController(),
@@ -13,7 +25,7 @@ void main() {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
           useMaterial3: true,
-          fontFamily: 'Nunito', // Nutzt Standard-Font, bis du Custom Fonts einbindest
+          fontFamily: 'Nunito',
         ),
         home: const BabyHomeScreen(),
       ),
@@ -21,7 +33,6 @@ void main() {
   );
 }
 
-// Hilfsliste für den "Text-Outline" Effekt (schwarze Ränder um weißen Text)
 const List<Shadow> outlineShadows = [
   Shadow(offset: Offset(-2, -2), color: Colors.black),
   Shadow(offset: Offset(2, -2), color: Colors.black),
@@ -30,14 +41,39 @@ const List<Shadow> outlineShadows = [
   Shadow(offset: Offset(0, 3), color: Colors.black),
 ];
 
-class BabyHomeScreen extends StatelessWidget {
+class BabyHomeScreen extends StatefulWidget {
   const BabyHomeScreen({super.key});
+
+  @override
+  State<BabyHomeScreen> createState() => _BabyHomeScreenState();
+}
+
+class _BabyHomeScreenState extends State<BabyHomeScreen> {
+  late StreamSubscription<AlarmSettings>? ringSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // Lausche auf klingelnde Alarme!
+    ringSubscription = Alarm.ringStream.stream.listen((alarmSettings) {
+      // Wenn der Alarm klingelt, springe direkt zum Alarm-Screen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AlarmRingScreen()),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    ringSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final baby = Provider.of<BabyController>(context);
 
-    // Zeige den Todesbildschirm, wenn das Baby tot ist
     if (!baby.isAlive) {
       return Scaffold(
         backgroundColor: Colors.black,
@@ -45,11 +81,9 @@ class BabyHomeScreen extends StatelessWidget {
       );
     }
 
-    // Hauptmenü-UI
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Hintergrund-Gradient
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -59,14 +93,12 @@ class BabyHomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          // 2. Punktemuster Overlay
           Positioned.fill(
             child: Opacity(
               opacity: 0.5,
               child: CustomPaint(painter: DottedPatternPainter()),
             ),
           ),
-          // 3. Hauptinhalt
           SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -80,17 +112,26 @@ class BabyHomeScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             _buildHeader(),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
                             _buildStatusBars(baby),
-                            const SizedBox(height: 24),
-
-                            // Nimmt den übrigen Platz ein
+                            const SizedBox(height: 16),
                             Expanded(child: Center(child: _buildFamilyPhoto())),
-
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
                             _buildActionButtons(context, baby),
-                            const SizedBox(height: 24),
-                            _buildStatsPanel(baby),
+                            const SizedBox(height: 16),
+                            // Button für die Statistik und den Baby-Zustand (ersetzt das alte Panel)
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (context) => const StatsScreen()));
+                              },
+                              icon: const Icon(Icons.analytics, color: Colors.black),
+                              label: const Text("Statistiken & Zustand (Debug)"),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            )
                           ],
                         ),
                       ),
@@ -107,7 +148,7 @@ class BabyHomeScreen extends StatelessWidget {
 
   Widget _buildHeader() {
     return Transform.rotate(
-      angle: -0.017, // ca. -1 Grad rotiert
+      angle: -0.017,
       child: const Text(
         "Mini Boro Tamagochi",
         textAlign: TextAlign.center,
@@ -139,7 +180,6 @@ class BabyHomeScreen extends StatelessWidget {
         Expanded(
           child: _buildSingleProgressBar(
             title: "Chill-Faktor",
-            // Das Bild wird hier als iconWidget übergeben und deutlich kleiner dargestellt (height 30)
             iconWidget: Image.asset('assets/weed_leaf.png', height: 80),
             percentage: baby.chillLevel,
             color: Colors.green,
@@ -225,7 +265,7 @@ class BabyHomeScreen extends StatelessWidget {
 
   Widget _buildFamilyPhoto() {
     return Transform.rotate(
-      angle: 0.017, // ~1 Grad rotiert
+      angle: 0.017,
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
@@ -243,26 +283,23 @@ class BabyHomeScreen extends StatelessWidget {
           child: Container(
             clipBehavior: Clip.hardEdge,
             decoration: BoxDecoration(
-              color: Colors.purple[900], // Das ist die Hintergrundfarbe, die um das kleinere Bild herum sichtbar wird
+              color: Colors.purple[900],
               borderRadius: BorderRadius.circular(4),
               border: Border.all(color: Colors.black, width: 2),
             ),
             child: AspectRatio(
-              aspectRatio: 4 / 3, // Das Verhältnis des Rahmens bleibt groß und gleich
+              aspectRatio: 4 / 3,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // --- NEU: Bild verkleinert und zentriert IM Rahmen ---
                   Center(
                     child: FractionallySizedBox(
-                      widthFactor: 0.95, // Macht das Bild auf 70% (also 30% kleiner) der inneren Breite
-                      heightFactor: 0.95, // Macht das Bild auch in der Höhe 30% kleiner
+                      widthFactor: 0.95,
+                      heightFactor: 0.95,
                       child: Image.asset('assets/family_boro.png', fit: BoxFit.cover),
                     ),
                   ),
-                  // ---------------------------------------------------
-                  // Halbtransparentes Overlay über den gesamten inneren Bereich
-                  Container(color: Colors.black.withValues(alpha: 0.2)),
+                  Container(color: Colors.black.withOpacity(0.2)),
                 ],
               ),
             ),
@@ -273,27 +310,40 @@ class BabyHomeScreen extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context, BabyController baby) {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildBrutalistButton(
-            text: "Döner essen",
-            iconWidget: const Text("🌯", style: TextStyle(fontSize: 40)),
-            color: Colors.orange,
-            onTap: () => baby.feed(20),
-          ),
+        Row(
+          children: [
+            Expanded(
+              child: _buildBrutalistButton(
+                text: "Döner essen",
+                iconWidget: const Text("🌯", style: TextStyle(fontSize: 40)),
+                color: Colors.orange,
+                onTap: () => baby.feed(20),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildBrutalistButton(
+                text: "Joint rauchen",
+                iconWidget: Image.asset('assets/weed_leaf.png', height: 1000),
+                color: Colors.green,
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
+                },
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildBrutalistButton(
-            text: "Joint rauchen",
-            // Das Bild hier ebenfalls anstelle des Emojis, kleiner und zentriert
-            iconWidget: Image.asset('assets/weed_leaf.png', height: 1000),
-            color: Colors.green,
-            onTap: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
-            },
-          ),
+        const SizedBox(height: 16),
+        // Neuer Button für das Gin Minispiel
+        _buildBrutalistButton(
+          text: "Gin Fläschchen füllen",
+          iconWidget: const Text("🍼", style: TextStyle(fontSize: 40)), // Platzhalter Emoji bis Bild da ist
+          color: Colors.lightBlueAccent,
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const GinMinigameScreen()));
+          },
         ),
       ],
     );
@@ -317,8 +367,6 @@ class BabyHomeScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // SizedBox sorgt dafür, dass die Emojis und Bilder unabhängig von ihrer eigenen Größe
-            // denselben Platz einnehmen und die darunter liegenden Texte auf der exakt gleichen Höhe bleiben
             SizedBox(
               height: 48,
               child: Center(child: iconWidget),
@@ -345,51 +393,6 @@ class BabyHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsPanel(BabyController baby) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        // Hier .withValues angewendet
-        border: Border.all(color: Colors.black.withValues(alpha: 0.1)),
-        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 10, offset: Offset(0, 5))],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildStatItem(const Text("💰", style: TextStyle(fontSize: 32)), "Schulden\nin CHF", baby.debt.toStringAsFixed(2)),
-          _buildStatItem(const Text("🌯", style: TextStyle(fontSize: 32)), "Gegessene\nDöner", "${baby.donersEaten}"),
-          _buildStatItem(Image.asset('assets/weed_leaf.png', height: 28), "Gerauchte\nJoints", "${baby.jointsSmoked}"),
-          _buildStatItem(const Text("☠️", style: TextStyle(fontSize: 32)), "Todesfälle", "${baby.deathsCount}"),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(Widget iconWidget, String label, String value) {
-    return Expanded(
-      child: Column(
-        children: [
-          // SizedBox für einheitliche Höhe der Icons/Bilder in der Leiste
-          SizedBox(height: 40, child: Center(child: iconWidget)),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, height: 1.1, color: Colors.black87),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.black),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Die bestehende "Todes-UI" - leicht angepasst an das neue Layout
   Widget _buildDeathUI(BuildContext context, BabyController baby) {
     final TextEditingController codeController = TextEditingController();
     return Padding(
@@ -417,7 +420,13 @@ class BabyHomeScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => baby.revive(codeController.text),
+              onPressed: () {
+                if(baby.revive(codeController.text)) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Baby wiederbelebt!')));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Falscher Code!')));
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 padding: const EdgeInsets.symmetric(vertical: 15),
@@ -432,13 +441,11 @@ class BabyHomeScreen extends StatelessWidget {
   }
 }
 
-// CustomPainter für das halbtransparente Punktemuster im Hintergrund
 class DottedPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    // Hier .withValues angewendet
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.3);
-    const double spacing = 40.0; // Abstand der Punkte analog zum CSS "background-size"
+    final paint = Paint()..color = Colors.white.withOpacity(0.3);
+    const double spacing = 40.0;
 
     for (double x = 0; x < size.width; x += spacing) {
       for (double y = 0; y < size.height; y += spacing) {
