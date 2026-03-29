@@ -14,15 +14,15 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
   bool _isPlaying = true;
   double _stoppedValue = 0.0;
 
-  // --- ANGEPASST: Zielwert entspricht nun exakt der visuellen Linie bei 58%
-  final double _targetFillLevel = 0.58;
+  // --- KORRIGIERT: Der logische Zielwert, der optisch genau deiner Wunsch-Position entspricht
+  final double _targetFillLevel = 0.64;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds:20600),
     )..repeat(reverse: true);
   }
 
@@ -122,8 +122,6 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
-                      // --- FLÜSSIGKEITS-ANIMATION ENTFERNT WIE GEWÜNSCHT ---
-
                       // --- DAS NEUE FLASCHEN BILD ---
                       Positioned.fill(
                         child: Image.asset(
@@ -138,7 +136,7 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
                           animation: _controller,
                           builder: (context, child) {
                             return Positioned(
-                              bottom: _controller.value * 400,
+                              bottom: _controller.value * 400, // Roter Strich skaliert mit 400
                               left: 0,
                               right: 0,
                               child: Container(
@@ -152,9 +150,9 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
                           },
                         ),
 
-                      // --- DIE ZIEL-LINIE (Bester Füllstand), nun gekoppelt an die Variable ---
+                      // --- DIE ZIEL-LINIE (Bester Füllstand) ---
                       Positioned(
-                        bottom: _targetFillLevel * 442,
+                        bottom: _targetFillLevel * 400, // Grüner Strich skaliert nun auch wieder mit 400!
                         left: -20,
                         right: -20,
                         child: Row(
