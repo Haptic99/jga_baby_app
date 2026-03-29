@@ -141,11 +141,16 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
                         bottom: _targetFillLevel * 442,
                         left: 0,
                         right: 0,
-                        child: Container(
-                          height: 6,
-                          decoration: const BoxDecoration(
-                            color: Colors.redAccent,
-                            boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
+                        child: SizedBox(
+                          height: 30, // Gleiche Höhe wie die Icons der grünen Linie
+                          child: Center(
+                            child: Container(
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Colors.redAccent,
+                                boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
+                              ),
+                            ),
                           ),
                         ),
                       ),
