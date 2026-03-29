@@ -732,9 +732,34 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
 
   Widget _buildCenterSlot() {
     if (grinderSubstep == 0) {
-      // [...] (Bleibt gleich)
+      return DragTarget<String>(
+        onAcceptWithDetails: (details) {
+          if (details.data == 'weed') setState(() => grinderSubstep = 1);
+        },
+        builder: (context, candidateData, rejectedData) => Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
+            if (candidateData.isNotEmpty)
+              const Icon(Icons.arrow_upward, color: Colors.green, size: 60),
+          ],
+        ),
+      );
     } else if (grinderSubstep == 1) {
-      // [...] (Bleibt gleich)
+      return DragTarget<String>(
+        onAcceptWithDetails: (details) {
+          if (details.data == 'lid') setState(() => grinderSubstep = 2);
+        },
+        builder: (context, candidateData, rejectedData) => Stack(
+          alignment: Alignment.center,
+          children: [
+            Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
+            Image.asset('assets/weed.png', width: elementSize * 0.6),
+            if (candidateData.isNotEmpty)
+              const Icon(Icons.arrow_downward, color: Colors.green, size: 60),
+          ],
+        ),
+      );
     } else {
       return Stack(
         alignment: Alignment.center,

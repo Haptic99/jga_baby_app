@@ -68,6 +68,7 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
     super.initState();
     // Lausche auf klingelnde Alarme!
     ringSubscription = Alarm.ringStream.stream.listen((alarmSettings) {
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AlarmRingScreen()),
@@ -309,7 +310,7 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
                       child: Image.asset('assets/family_boro.png', fit: BoxFit.cover),
                     ),
                   ),
-                  Container(color: Colors.black.withOpacity(0.2)),
+                  Container(color: Colors.black.withValues(alpha: 0.2)),
                 ],
               ),
             ),
@@ -441,7 +442,7 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
 class DottedPatternPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.3);
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.3);
     const double spacing = 40.0;
 
     for (double x = 0; x < size.width; x += spacing) {

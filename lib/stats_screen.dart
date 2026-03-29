@@ -61,7 +61,7 @@ class _StatsScreenState extends State<StatsScreen> {
                   child: SwitchListTile(
                     title: const Text("Baby-Alarm (Wecker) aktiv", style: TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: const Text("Schalte dies an, damit das Handy random klingelt."),
-                    activeColor: Colors.red,
+                    activeTrackColor: Colors.red,
                     value: baby.isAlarmEnabled,
                     onChanged: (bool value) {
                       baby.toggleAlarm(value);
