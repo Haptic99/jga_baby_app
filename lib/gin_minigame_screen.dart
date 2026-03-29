@@ -14,16 +14,17 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
   bool _isPlaying = true;
   double _stoppedValue = 0.0;
 
-  // --- KORRIGIERT: Der logische Zielwert, der optisch genau deiner Wunsch-Position entspricht
-  final double _targetFillLevel = 0.64;
+  // --- HIER IST DEIN KALIBRIERUNGS-WERT (0.58) ---
+  final double _targetFillLevel = 0.58;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds:20600),
-    )..repeat(reverse: true);
+      duration: const Duration(seconds: 4), // Langsame Geschwindigkeit belassen, egal da keine Animation
+    );
+    // ..repeat(reverse: true); // --- TEST-MODUS: ANIMATION AUSGESCHALTET ---
   }
 
   @override
@@ -35,10 +36,11 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
   void _stopGame() {
     if (!_isPlaying) return;
 
-    _controller.stop();
+    // _controller.stop(); // --- TEST-MODUS: Controller läuft eh nicht ---
     setState(() {
       _isPlaying = false;
-      _stoppedValue = _controller.value;
+      // --- TEST-MODUS: Wir zwingen die Logik auf den perfekten Wert ---
+      _stoppedValue = _targetFillLevel;
     });
 
     double difference = (_targetFillLevel - _stoppedValue).abs();
@@ -54,19 +56,19 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
   void _showResultDialog(double accuracy) {
     String message = "";
     if (accuracy > 0.9) {
-      message = "Perfekt eingeschenkt! Baby ist beruhigt.";
+      message = "Perfekt eingeschenkt! (TESTMODUS)";
     } else if (accuracy > 0.6) {
       message = "Ganz okay. Baby trinkt es.";
     } else {
-      message = "Katastrophe! Baby bekommt die Krise (Alarm-Chance hoch!)";
+      message = "Katastrophe! Baby bekommt die Krise.";
     }
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text("Ergebnis"),
-        content: Text("Genauigkeit: ${(accuracy * 100).toInt()}%\n\n$message"),
+        title: const Text("Ergebnis (TESTMODUS)"),
+        content: Text("Genauigkeit: ${(accuracy * 100).toInt()}%\n\n$message\n\nVisueller Wert: $_targetFillLevel\nLogischer Wert: $_stoppedValue"),
         actions: [
           TextButton(
             onPressed: () {
@@ -85,7 +87,7 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: const Text("Gin Flasche füllen", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
+        title: const Text("Gin Flasche füllen [TEST]", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
         backgroundColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -105,7 +107,7 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text(
-                  "Tippe auf den Bildschirm\num zu stoppen!",
+                  "[TESTMODUS]\nTippe zum Stoppen",
                   textAlign: TextAlign.center,
                   style: TextStyle(
                       color: Colors.white,
@@ -122,7 +124,7 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
-                      // --- DAS NEUE FLASCHEN BILD ---
+                      // --- DAS FLASCHEN BILD ---
                       Positioned.fill(
                         child: Image.asset(
                           'assets/gin_baby_bottle.png',
@@ -130,29 +132,27 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
                         ),
                       ),
 
-                      // --- DER RASENDE STRICH ---
-                      if (_isPlaying)
-                        AnimatedBuilder(
-                          animation: _controller,
-                          builder: (context, child) {
-                            return Positioned(
-                              bottom: _controller.value * 400, // Roter Strich skaliert mit 400
-                              left: 0,
-                              right: 0,
-                              child: Container(
-                                height: 6,
-                                decoration: const BoxDecoration(
-                                  color: Colors.redAccent,
-                                  boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
-                                ),
-                              ),
-                            );
-                          },
+                      // --- DER RASENDE STRICH (JETZT STATISCH) ---
+                      // Wir rendern nur einen statischen Strich, der genau wie der grüne berechnet wird.
+                      // if (_isPlaying) AnimatedBuilder... wurde entfernt
+
+                      // Statischer Roter Strich an der Zielposition (nutzt 442 Multiplikator wie grün)
+                      Positioned(
+                        bottom: _targetFillLevel * 442,
+                        left: 0,
+                        right: 0,
+                        child: Container(
+                          height: 6,
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
+                          ),
                         ),
+                      ),
 
                       // --- DIE ZIEL-LINIE (Bester Füllstand) ---
                       Positioned(
-                        bottom: _targetFillLevel * 400, // Grüner Strich skaliert nun auch wieder mit 400!
+                        bottom: _targetFillLevel * 442, // Beibehaltung des 442 Multiplikators
                         left: -20,
                         right: -20,
                         child: Row(
