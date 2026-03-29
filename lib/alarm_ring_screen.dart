@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'baby_controller.dart';
+import 'gin_minigame_screen.dart'; // NEU: Gin-Minispiel importieren
 
 class AlarmRingScreen extends StatelessWidget {
   const AlarmRingScreen({super.key});
@@ -33,9 +34,15 @@ class AlarmRingScreen extends StatelessWidget {
               const SizedBox(height: 60),
               ElevatedButton(
                 onPressed: () {
-                  // Alarm stoppen und Screen verlassen
+                  // Alarm stoppen
                   Provider.of<BabyController>(context, listen: false).stopAlarm();
-                  Navigator.pop(context);
+
+                  // Direkt weiterleiten ins Gin-Minispiel!
+                  // PushReplacement sorgt dafür, dass er mit einem Zurück-Wischen nicht hierher zurückkommt.
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GinMinigameScreen()),
+                  );
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,

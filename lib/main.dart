@@ -2,19 +2,31 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:alarm/alarm.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // NEU
 import 'baby_controller.dart';
 import 'smoke_minigame_screen.dart';
-import 'gin_minigame_screen.dart';
 import 'stats_screen.dart';
 
 // Dummy-Screen für den klingelnden Alarm
 import 'alarm_ring_screen.dart';
+
+// Globale Instanz für die Notifications
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialisiere den Alarm-Service
   await Alarm.init();
+
+  // Initialisiere Local Notifications (Android & iOS)
+  const AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const DarwinInitializationSettings initializationSettingsDarwin = DarwinInitializationSettings();
+  const InitializationSettings initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsDarwin,
+  );
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
   runApp(
     ChangeNotifierProvider(
@@ -56,7 +68,6 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
     super.initState();
     // Lausche auf klingelnde Alarme!
     ringSubscription = Alarm.ringStream.stream.listen((alarmSettings) {
-      // Wenn der Alarm klingelt, springe direkt zum Alarm-Screen
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const AlarmRingScreen()),
@@ -119,7 +130,6 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
                             const SizedBox(height: 16),
                             _buildActionButtons(context, baby),
                             const SizedBox(height: 16),
-                            // Button für die Statistik und den Baby-Zustand (ersetzt das alte Panel)
                             ElevatedButton.icon(
                               onPressed: () {
                                 Navigator.push(context, MaterialPageRoute(builder: (context) => const StatsScreen()));
@@ -310,41 +320,28 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
   }
 
   Widget _buildActionButtons(BuildContext context, BabyController baby) {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _buildBrutalistButton(
-                text: "Döner essen",
-                iconWidget: const Text("🌯", style: TextStyle(fontSize: 40)),
-                color: Colors.orange,
-                onTap: () => baby.feed(20),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildBrutalistButton(
-                text: "Joint rauchen",
-                iconWidget: Image.asset('assets/weed_leaf.png', height: 1000),
-                color: Colors.green,
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
-                },
-              ),
-            ),
-          ],
+        Expanded(
+          child: _buildBrutalistButton(
+            text: "Döner essen",
+            iconWidget: const Text("🌯", style: TextStyle(fontSize: 40)),
+            color: Colors.orange,
+            onTap: () => baby.feed(20),
+          ),
         ),
-        const SizedBox(height: 16),
-        // Neuer Button für das Gin Minispiel
-        _buildBrutalistButton(
-          text: "Gin Fläschchen füllen",
-          iconWidget: const Text("🍼", style: TextStyle(fontSize: 40)), // Platzhalter Emoji bis Bild da ist
-          color: Colors.lightBlueAccent,
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const GinMinigameScreen()));
-          },
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildBrutalistButton(
+            text: "Joint rauchen",
+            iconWidget: Image.asset('assets/weed_leaf.png', height: 1000), // Height 1000 bleibt hier aus dem Original? (Vielleicht besser anpassen falls Clipping passiert)
+            color: Colors.green,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
+            },
+          ),
         ),
+        // Gin-Minispiel Button wurde entfernt! (wird jetzt via Alarm aufgerufen)
       ],
     );
   }

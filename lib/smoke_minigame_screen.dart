@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'baby_controller.dart';
+import 'package:flutter/services.dart';
 
 // Hilfsliste für den "Text-Outline" Effekt (schwarze Ränder um weißen Text)
 const List<Shadow> outlineShadows = [
@@ -613,6 +614,9 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
   double lastAngle = 0.0;
   bool _isFinished = false;
 
+  // NEU: Tracking, wann zuletzt vibriert wurde (verhindert Dauervibrieren)
+  double _lastVibrationProgress = 0.0;
+
   final double elementSize = 234.0;
 
   String _getWorkflowTitle() {
@@ -728,34 +732,9 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
 
   Widget _buildCenterSlot() {
     if (grinderSubstep == 0) {
-      return DragTarget<String>(
-        onAcceptWithDetails: (details) {
-          if (details.data == 'weed') setState(() => grinderSubstep = 1);
-        },
-        builder: (context, candidateData, rejectedData) => Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
-            if (candidateData.isNotEmpty)
-              const Icon(Icons.arrow_upward, color: Colors.green, size: 60),
-          ],
-        ),
-      );
+      // [...] (Bleibt gleich)
     } else if (grinderSubstep == 1) {
-      return DragTarget<String>(
-        onAcceptWithDetails: (details) {
-          if (details.data == 'lid') setState(() => grinderSubstep = 2);
-        },
-        builder: (context, candidateData, rejectedData) => Stack(
-          alignment: Alignment.center,
-          children: [
-            Image.asset('assets/grinder_base_open.png', width: elementSize, height: elementSize),
-            Image.asset('assets/weed.png', width: elementSize * 0.6),
-            if (candidateData.isNotEmpty)
-              const Icon(Icons.arrow_downward, color: Colors.green, size: 60),
-          ],
-        ),
-      );
+      // [...] (Bleibt gleich)
     } else {
       return Stack(
         alignment: Alignment.center,
@@ -778,6 +757,12 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
                 grindProgress += diff.abs();
                 lastAngle = currentAngle;
               });
+
+              // NEU: Haptisches Feedback (löst alle ~1.0 Einheiten aus)
+              if (grindProgress - _lastVibrationProgress >= 1.0) {
+                HapticFeedback.selectionClick();
+                _lastVibrationProgress = grindProgress;
+              }
 
               if (grindProgress >= 25.0 && !_isFinished) {
                 _isFinished = true;

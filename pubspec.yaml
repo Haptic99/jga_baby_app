@@ -13,6 +13,7 @@ dependencies:
   sensors_plus: ^6.1.1
   shared_preferences: ^2.2.2
   alarm: ^4.1.1
+  flutter_local_notifications: ^17.0.0 # NEU hinzugefügt
 
 dev_dependencies:
   flutter_test:

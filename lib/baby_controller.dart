@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:alarm/alarm.dart';
 import 'package:alarm/model/alarm_settings.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // NEU
+import 'main.dart'; // Für den flutterLocalNotificationsPlugin
 
 class BabyController extends ChangeNotifier {
   double hunger = 100.0;
@@ -25,6 +27,9 @@ class BabyController extends ChangeNotifier {
 
   DateTime? nextAlarmTime;
 
+  // Notification Konstanten
+  final int _statusNotificationId = 888;
+
   BabyController() {
     _initController();
   }
@@ -45,6 +50,37 @@ class BabyController extends ChangeNotifier {
     }
   }
 
+  // --- NEU: Aktualisiert die Ongoing Notification ---
+  Future<void> _updateOngoingNotification() async {
+    if (!isAlive) {
+      await flutterLocalNotificationsPlugin.cancel(_statusNotificationId);
+      return;
+    }
+
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    AndroidNotificationDetails(
+      'baby_status_channel',
+      'Baby Status',
+      channelDescription: 'Zeigt den dauerhaften Status des Babys an',
+      importance: Importance.low,
+      priority: Priority.low,
+      ongoing: true,        // Wichtig: Lässt sich nicht wegschieben
+      autoCancel: false,
+      showWhen: false,
+      icon: '@mipmap/ic_launcher',
+    );
+
+    const NotificationDetails platformChannelSpecifics =
+    NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    await flutterLocalNotificationsPlugin.show(
+      _statusNotificationId,
+      'Baby Status',
+      'Magen: ${hunger.toInt()}% | Chill: ${chillLevel.toInt()}% | Stress: ${babyStress.toInt()}%',
+      platformChannelSpecifics,
+    );
+  }
+
   void _loadData() {
     if (_prefs == null) return;
     hunger = _prefs!.getDouble('hunger') ?? 100.0;
@@ -57,17 +93,14 @@ class BabyController extends ChangeNotifier {
     deathsCount = _prefs!.getInt('deathsCount') ?? 0;
     jointsSmoked = _prefs!.getInt('jointsSmoked') ?? 0;
 
-    // --- NEU: OFFLINE-ZEIT BERECHNEN UND BESTRAFEN ---
     int? lastSavedMillis = _prefs!.getInt('lastSavedTime');
     if (lastSavedMillis != null && isAlive) {
       final lastSavedDate = DateTime.fromMillisecondsSinceEpoch(lastSavedMillis);
       final elapsedSeconds = DateTime.now().difference(lastSavedDate).inSeconds;
 
-      // Wie viele 5-Sekunden-Ticks wurden verpasst?
       final ticks = elapsedSeconds ~/ 5;
 
       if (ticks > 0) {
-        // Wir simulieren die verpassten Ticks
         for (int i = 0; i < ticks; i++) {
           hunger -= 1.5;
           chillLevel -= 1.0;
@@ -83,11 +116,14 @@ class BabyController extends ChangeNotifier {
             deathsCount++;
             Alarm.stop(alarmId);
             nextAlarmTime = null;
-            break; // Baby ist tot, Schleife abbrechen (keine weitere Berechnung nötig)
+            break;
           }
         }
       }
     }
+
+    // Notification aktualisieren, nachdem Daten geladen sind
+    if (isAlive) _updateOngoingNotification();
 
     notifyListeners();
   }
@@ -103,8 +139,6 @@ class BabyController extends ChangeNotifier {
     await _prefs!.setInt('donersEaten', donersEaten);
     await _prefs!.setInt('deathsCount', deathsCount);
     await _prefs!.setInt('jointsSmoked', jointsSmoked);
-
-    // --- NEU: AKTUELLEN ZEITSTEMPEL SPEICHERN ---
     await _prefs!.setInt('lastSavedTime', DateTime.now().millisecondsSinceEpoch);
   }
 
@@ -137,9 +171,10 @@ class BabyController extends ChangeNotifier {
           deathsCount++;
           _timer?.cancel();
           Alarm.stop(alarmId);
-          nextAlarmTime = null; // Zeit löschen, da tot
+          nextAlarmTime = null;
         }
-        _saveData(); // Speichert ab sofort auch die Uhrzeit
+        _saveData();
+        _updateOngoingNotification(); // Update die Notification alle 5 Sek.
         notifyListeners();
       }
     });
@@ -208,6 +243,7 @@ class BabyController extends ChangeNotifier {
     hunger = (hunger + amount).clamp(0, 100);
     donersEaten++;
     _saveData();
+    _updateOngoingNotification();
     notifyListeners();
   }
 
@@ -216,6 +252,7 @@ class BabyController extends ChangeNotifier {
     chillLevel = (chillLevel + amount).clamp(0, 100);
     jointsSmoked++;
     _saveData();
+    _updateOngoingNotification();
     notifyListeners();
   }
 
@@ -228,6 +265,7 @@ class BabyController extends ChangeNotifier {
       _startLifeLoop();
       _scheduleNextAlarm();
       _saveData();
+      _updateOngoingNotification();
       notifyListeners();
       return true;
     }
