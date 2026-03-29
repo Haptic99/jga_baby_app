@@ -13,24 +13,37 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
   late AnimationController _controller;
   bool _isPlaying = true;
   double _stoppedValue = 0.0;
+  bool _isInitialized = false;
 
   // --- DEINE NEUEN KALIBRIERUNGS-WERTE ---
   // 1. Dein gewünschter Füllstand (0.0 ist ganz unten, 1.0 ist ganz oben)
   final double _targetFillLevel = 0.69;
 
   // 2. Die Pixel-Grenzen für die Flasche (Hiermit löst du das Höhen-Problem!)
-  // Verändere diese Werte, bis der rote Strich perfekt den sichtbaren Flaschenbauch abdeckt.
   final double _minLinePosition = -13.0;  // Wie weit nach unten geht 0.0? (z.B. der Flaschenboden)
   final double _maxLinePosition = 380.0; // Wie weit nach oben geht 1.0? (Darf nicht größer als 400 sein!)
 
   @override
-  void initState() {
-    super.initState();
-    // Animation läuft wieder!
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2), // 2 Sekunden für hoch, 2 für runter
-    )..repeat(reverse: true);
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Wir initialisieren den Controller hier, damit wir den Provider sicher auslesen können
+    if (!_isInitialized) {
+      final babyController = Provider.of<BabyController>(context, listen: false);
+      double stress = babyController.babyStress; // Wert von 0.0 bis 100.0
+
+      // Je höher der Stress, desto langsamer (einfacher) die Animation
+      // Stress 0 -> 1000 ms (schnell, schwer)
+      // Stress 100 -> 3000 ms (langsam, leicht)
+      int durationMs = 1000 + (stress * 20).toInt();
+
+      _controller = AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: durationMs),
+      )..repeat(reverse: true);
+
+      _isInitialized = true;
+    }
   }
 
   @override
@@ -50,9 +63,15 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
       _stoppedValue = _controller.value;
     });
 
+    // --- NEUE BERECHNUNG: 0% bei ganz oben (1.0) und ganz unten (0.0) ---
     double difference = (_targetFillLevel - _stoppedValue).abs();
-    double maxError = _targetFillLevel > (1 - _targetFillLevel) ? _targetFillLevel : (1 - _targetFillLevel);
-    double accuracy = (1.0 - (difference / maxError)).clamp(0.0, 1.0);
+
+    // Wir berechnen den maximal möglichen Fehler je nachdem, auf welcher Seite vom Ziel wir gelandet sind
+    double maxPossibleError = _stoppedValue > _targetFillLevel
+        ? (1.0 - _targetFillLevel) // Abstand vom Ziel bis zum absoluten Top
+        : _targetFillLevel;        // Abstand vom Ziel bis zum absoluten Boden
+
+    double accuracy = (1.0 - (difference / maxPossibleError)).clamp(0.0, 1.0);
 
     Provider.of<BabyController>(context, listen: false).evaluateGinFilling(accuracy);
     _showResultDialog(accuracy);
@@ -77,8 +96,8 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
+              Navigator.pop(context); // Schließt den Dialog
+              Navigator.pop(context); // Schließt den Minigame-Screen
             },
             child: const Text("Zurück zum Baby"),
           )
@@ -95,6 +114,7 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false, // <-- ENTFERNT DEN ZURÜCK-BUTTON OBEN LINKS
         title: const Text("Gin Flasche füllen", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -107,92 +127,107 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
             fit: BoxFit.cover,
           ),
         ),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: _stopGame,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Tippe zum Stoppen",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      shadows: [Shadow(color: Colors.black, blurRadius: 8, offset: Offset(2, 2))]
-                  ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                "Fülle den Gin bis zur Markierung!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    shadows: [Shadow(color: Colors.black, blurRadius: 8, offset: Offset(2, 2))]
                 ),
-                const SizedBox(height: 50),
+              ),
+              const SizedBox(height: 30),
 
-                SizedBox(
-                  height: 400,
-                  width: 200,
-                  child: Stack(
-                    alignment: Alignment.bottomCenter,
-                    children: [
-                      // --- DAS FLASCHEN BILD ---
-                      Positioned.fill(
-                        child: Image.asset(
-                          'assets/gin_baby_bottle.png',
-                          fit: BoxFit.contain,
-                        ),
+              SizedBox(
+                height: 400,
+                width: 200,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    // --- DAS FLASCHEN BILD ---
+                    Positioned.fill(
+                      child: Image.asset(
+                        'assets/gin_baby_bottle.png',
+                        fit: BoxFit.contain,
                       ),
+                    ),
 
-                      // --- DER ANIMIERTE ROTE STRICH ---
-                      AnimatedBuilder(
-                        animation: _controller,
-                        builder: (context, child) {
-                          // Der Controller wert (0.0 bis 1.0) wird exakt in deine festgelegten Pixel umgerechnet
-                          double currentRedPixelPos = _minLinePosition + (_controller.value * (_maxLinePosition - _minLinePosition));
+                    // --- DER ANIMIERTE ROTE STRICH ---
+                    AnimatedBuilder(
+                      animation: _controller,
+                      builder: (context, child) {
+                        // Der Controller wert (0.0 bis 1.0) wird exakt in deine festgelegten Pixel umgerechnet
+                        double currentRedPixelPos = _minLinePosition + (_controller.value * (_maxLinePosition - _minLinePosition));
 
-                          return Positioned(
-                            bottom: currentRedPixelPos,
-                            left: 0,
-                            right: 0,
-                            child: SizedBox(
-                              height: 30, // Korrektur der Höhe für perfekte Überlappung
-                              child: Center(
-                                child: Container(
-                                  height: 6,
-                                  decoration: const BoxDecoration(
-                                    color: Colors.redAccent,
-                                    boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // --- DIE ZIEL-LINIE (Grün) ---
-                      Positioned(
-                        bottom: targetPixelPos,
-                        left: -20,
-                        right: -20,
-                        child: Row(
-                          children: [
-                            const Icon(Icons.arrow_right, color: Colors.greenAccent, size: 30),
-                            Expanded(
+                        return Positioned(
+                          bottom: currentRedPixelPos,
+                          left: 0,
+                          right: 0,
+                          child: SizedBox(
+                            height: 30, // Korrektur der Höhe für perfekte Überlappung
+                            child: Center(
                               child: Container(
-                                height: 4,
+                                height: 6,
                                 decoration: const BoxDecoration(
-                                  color: Colors.greenAccent,
-                                  boxShadow: [BoxShadow(color: Colors.green, blurRadius: 8)],
+                                  color: Colors.redAccent,
+                                  boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
                                 ),
                               ),
                             ),
-                            const Icon(Icons.arrow_left, color: Colors.greenAccent, size: 30),
-                          ],
-                        ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // --- DIE ZIEL-LINIE (Grün) ---
+                    Positioned(
+                      bottom: targetPixelPos,
+                      left: -20,
+                      right: -20,
+                      child: Row(
+                        children: [
+                          const Icon(Icons.arrow_right, color: Colors.greenAccent, size: 30),
+                          Expanded(
+                            child: Container(
+                              height: 4,
+                              decoration: const BoxDecoration(
+                                color: Colors.greenAccent,
+                                boxShadow: [BoxShadow(color: Colors.green, blurRadius: 8)],
+                              ),
+                            ),
+                          ),
+                          const Icon(Icons.arrow_left, color: Colors.greenAccent, size: 30),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+
+              const SizedBox(height: 50),
+
+              // --- NEUER STOPP-BUTTON ---
+              ElevatedButton(
+                onPressed: _isPlaying ? _stopGame : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 8,
+                ),
+                child: const Text(
+                  "STOPP",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            ],
           ),
         ),
       ),
