@@ -11,6 +11,7 @@ class BabyController extends ChangeNotifier {
   double babyStress = 0.0;
   double debt = 0.0;
   bool isAlive = true;
+  bool isAlarmEnabled = false; // STANDARDMÄßIG AUS FÜR DAS TESTING!
 
   int donersEaten = 0;
   int deathsCount = 0;
@@ -31,7 +32,8 @@ class BabyController extends ChangeNotifier {
     _loadData();
     _startLifeLoop();
 
-    if (!await Alarm.hasAlarm()) {
+    // Nur starten, wenn Alarm aktiv ist und keiner existiert
+    if (isAlarmEnabled && !await Alarm.hasAlarm()) {
       _scheduleNextAlarm();
     }
   }
@@ -43,6 +45,7 @@ class BabyController extends ChangeNotifier {
     babyStress = _prefs!.getDouble('babyStress') ?? 0.0;
     debt = _prefs!.getDouble('debt') ?? 0.0;
     isAlive = _prefs!.getBool('isAlive') ?? true;
+    isAlarmEnabled = _prefs!.getBool('isAlarmEnabled') ?? false;
     donersEaten = _prefs!.getInt('donersEaten') ?? 0;
     deathsCount = _prefs!.getInt('deathsCount') ?? 0;
     jointsSmoked = _prefs!.getInt('jointsSmoked') ?? 0;
@@ -56,9 +59,22 @@ class BabyController extends ChangeNotifier {
     await _prefs!.setDouble('babyStress', babyStress);
     await _prefs!.setDouble('debt', debt);
     await _prefs!.setBool('isAlive', isAlive);
+    await _prefs!.setBool('isAlarmEnabled', isAlarmEnabled);
     await _prefs!.setInt('donersEaten', donersEaten);
     await _prefs!.setInt('deathsCount', deathsCount);
     await _prefs!.setInt('jointsSmoked', jointsSmoked);
+  }
+
+  // --- WECKER EIN/AUSSCHALTEN ---
+  void toggleAlarm(bool value) {
+    isAlarmEnabled = value;
+    _saveData();
+    if (isAlarmEnabled) {
+      _scheduleNextAlarm(); // Wecker wieder scharf stellen
+    } else {
+      Alarm.stop(alarmId); // Wecker sofort stoppen und canceln
+    }
+    notifyListeners();
   }
 
   void _startLifeLoop() {
@@ -85,9 +101,9 @@ class BabyController extends ChangeNotifier {
     });
   }
 
-  // --- KORRIGIERTE ALARM LOGIK ---
   void _scheduleNextAlarm() {
-    if (!isAlive) return;
+    // Wenn Wecker ausgeschaltet oder Baby tot, brich ab
+    if (!isAlive || !isAlarmEnabled) return;
 
     int minSeconds = max(10, 120 - babyStress.toInt());
     int maxSeconds = minSeconds + 30;
@@ -103,7 +119,6 @@ class BabyController extends ChangeNotifier {
       assetAudioPath: 'assets/crying.mp3',
       loopAudio: true,
       vibrate: true,
-      // In Version 4.1.1 werden volume und fadeDuration noch direkt übergeben
       volume: 1.0,
       fadeDuration: 3.0,
       notificationSettings: const NotificationSettings(
@@ -131,7 +146,9 @@ class BabyController extends ChangeNotifier {
       babyStress = (babyStress + (1.0 - accuracyLevel) * 50).clamp(0, 100);
     }
     _saveData();
-    _scheduleNextAlarm();
+    if (isAlarmEnabled) {
+      _scheduleNextAlarm(); // Planen den Alarm nur, wenn aktiviert
+    }
     notifyListeners();
   }
 

@@ -27,9 +27,27 @@ class StatsScreen extends StatelessWidget {
                 const Divider(),
                 _buildRow("Babys Stress-Level:", "${baby.babyStress.toStringAsFixed(1)} / 100",
                     isAlert: baby.babyStress > 70),
+                const SizedBox(height: 16),
+
+                // --- NEUER TOGGLE FÜR DEN WECKER ---
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: SwitchListTile(
+                    title: const Text("Baby-Alarm (Wecker) aktiv", style: TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: const Text("Schalte dies an, damit das Handy random klingelt."),
+                    activeColor: Colors.red,
+                    value: baby.isAlarmEnabled,
+                    onChanged: (bool value) {
+                      baby.toggleAlarm(value);
+                    },
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
-                  "Je höher der Stress, desto öfter klingelt der Baby-Alarm im gesperrten Zustand!",
+                  "Je höher der Stress, desto öfter klingelt der Baby-Alarm!",
                   style: TextStyle(color: Colors.grey[700], fontSize: 12, fontStyle: FontStyle.italic),
                   textAlign: TextAlign.center,
                 ),

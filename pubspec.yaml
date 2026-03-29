@@ -12,7 +12,7 @@ dependencies:
   provider: ^6.1.1
   sensors_plus: ^6.1.1
   shared_preferences: ^2.2.2
-  alarm: ^4.0.8
+  alarm: ^4.1.1
 
 dev_dependencies:
   flutter_test:
@@ -35,3 +35,5 @@ flutter:
     - assets/joint_mini_game_background.png
     - assets/weed_leaf.png
     - assets/crying.mp3
+    - assets/gin_baby_bottle.png
+    - assets/gin_baby_bottle_background.png
