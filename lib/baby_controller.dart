@@ -23,7 +23,6 @@ class BabyController extends ChangeNotifier {
 
   final int alarmId = 42;
 
-  // --- KORREKTUR: Normale Variable statt asynchronem Getter ---
   DateTime? nextAlarmTime;
 
   BabyController() {
@@ -35,7 +34,6 @@ class BabyController extends ChangeNotifier {
     _loadData();
     _startLifeLoop();
 
-    // --- KORREKTUR: Wir warten (await) beim Start auf das Alarm-Plugin ---
     if (isAlarmEnabled) {
       final alarm = await Alarm.getAlarm(alarmId);
       if (alarm != null) {
@@ -58,6 +56,39 @@ class BabyController extends ChangeNotifier {
     donersEaten = _prefs!.getInt('donersEaten') ?? 0;
     deathsCount = _prefs!.getInt('deathsCount') ?? 0;
     jointsSmoked = _prefs!.getInt('jointsSmoked') ?? 0;
+
+    // --- NEU: OFFLINE-ZEIT BERECHNEN UND BESTRAFEN ---
+    int? lastSavedMillis = _prefs!.getInt('lastSavedTime');
+    if (lastSavedMillis != null && isAlive) {
+      final lastSavedDate = DateTime.fromMillisecondsSinceEpoch(lastSavedMillis);
+      final elapsedSeconds = DateTime.now().difference(lastSavedDate).inSeconds;
+
+      // Wie viele 5-Sekunden-Ticks wurden verpasst?
+      final ticks = elapsedSeconds ~/ 5;
+
+      if (ticks > 0) {
+        // Wir simulieren die verpassten Ticks
+        for (int i = 0; i < ticks; i++) {
+          hunger -= 1.5;
+          chillLevel -= 1.0;
+
+          if (hunger < 50 || chillLevel < 50) {
+            babyStress = (babyStress + 0.5).clamp(0, 100);
+          }
+
+          if (hunger <= 0 || chillLevel <= 0) {
+            hunger = 0;
+            chillLevel = 0;
+            isAlive = false;
+            deathsCount++;
+            Alarm.stop(alarmId);
+            nextAlarmTime = null;
+            break; // Baby ist tot, Schleife abbrechen (keine weitere Berechnung nötig)
+          }
+        }
+      }
+    }
+
     notifyListeners();
   }
 
@@ -72,6 +103,9 @@ class BabyController extends ChangeNotifier {
     await _prefs!.setInt('donersEaten', donersEaten);
     await _prefs!.setInt('deathsCount', deathsCount);
     await _prefs!.setInt('jointsSmoked', jointsSmoked);
+
+    // --- NEU: AKTUELLEN ZEITSTEMPEL SPEICHERN ---
+    await _prefs!.setInt('lastSavedTime', DateTime.now().millisecondsSinceEpoch);
   }
 
   void toggleAlarm(bool value) {
@@ -105,7 +139,7 @@ class BabyController extends ChangeNotifier {
           Alarm.stop(alarmId);
           nextAlarmTime = null; // Zeit löschen, da tot
         }
-        _saveData();
+        _saveData(); // Speichert ab sofort auch die Uhrzeit
         notifyListeners();
       }
     });
@@ -122,7 +156,6 @@ class BabyController extends ChangeNotifier {
     final now = DateTime.now();
     final alarmTime = now.add(Duration(seconds: randomDelay));
 
-    // --- KORREKTUR: Wir merken uns die Zeit direkt hier ---
     nextAlarmTime = alarmTime;
 
     final alarmSettings = AlarmSettings(
