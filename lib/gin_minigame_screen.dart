@@ -14,7 +14,8 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
   bool _isPlaying = true;
   double _stoppedValue = 0.0;
 
-  final double _targetFillLevel = 0.8;
+  // --- ANGEPASST: Zielwert entspricht nun exakt der visuellen Linie bei 58%
+  final double _targetFillLevel = 0.58;
 
   @override
   void initState() {
@@ -82,7 +83,7 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true, // Lässt den Hintergrund hinter die AppBar gehen
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: const Text("Gin Flasche füllen", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, shadows: [Shadow(color: Colors.black, blurRadius: 4)])),
         backgroundColor: Colors.transparent,
@@ -90,7 +91,6 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Container(
-        // --- NEUES HINTERGRUNDBILD FÜR DEN SCREEN ---
         decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/gin_baby_bottle_background.png'),
@@ -118,25 +118,11 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
 
                 SizedBox(
                   height: 400,
-                  width: 200, // Etwas breiter gemacht, damit die Flasche gut reinpasst
+                  width: 200,
                   child: Stack(
                     alignment: Alignment.bottomCenter,
                     children: [
-                      // --- DIE FLÜSSIGKEIT (Liegt HINTER der Flasche) ---
-                      if (!_isPlaying)
-                        FractionallySizedBox(
-                          heightFactor: _stoppedValue,
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.cyanAccent.withOpacity(0.6), // Leicht bläuliche Gin-Farbe
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(30),
-                                bottomRight: Radius.circular(30),
-                              ),
-                            ),
-                          ),
-                        ),
+                      // --- FLÜSSIGKEITS-ANIMATION ENTFERNT WIE GEWÜNSCHT ---
 
                       // --- DAS NEUE FLASCHEN BILD ---
                       Positioned.fill(
@@ -166,9 +152,9 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
                           },
                         ),
 
-                      // --- DIE ZIEL-LINIE (Bester Füllstand) ---
+                      // --- DIE ZIEL-LINIE (Bester Füllstand), nun gekoppelt an die Variable ---
                       Positioned(
-                        bottom: _targetFillLevel * 320,
+                        bottom: _targetFillLevel * 442,
                         left: -20,
                         right: -20,
                         child: Row(

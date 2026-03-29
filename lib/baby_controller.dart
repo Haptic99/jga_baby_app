@@ -11,7 +11,7 @@ class BabyController extends ChangeNotifier {
   double babyStress = 0.0;
   double debt = 0.0;
   bool isAlive = true;
-  bool isAlarmEnabled = false; // STANDARDMÄßIG AUS FÜR DAS TESTING!
+  bool isAlarmEnabled = false;
 
   int donersEaten = 0;
   int deathsCount = 0;
@@ -23,6 +23,9 @@ class BabyController extends ChangeNotifier {
 
   final int alarmId = 42;
 
+  // --- KORREKTUR: Normale Variable statt asynchronem Getter ---
+  DateTime? nextAlarmTime;
+
   BabyController() {
     _initController();
   }
@@ -32,9 +35,15 @@ class BabyController extends ChangeNotifier {
     _loadData();
     _startLifeLoop();
 
-    // Nur starten, wenn Alarm aktiv ist und keiner existiert
-    if (isAlarmEnabled && !await Alarm.hasAlarm()) {
-      _scheduleNextAlarm();
+    // --- KORREKTUR: Wir warten (await) beim Start auf das Alarm-Plugin ---
+    if (isAlarmEnabled) {
+      final alarm = await Alarm.getAlarm(alarmId);
+      if (alarm != null) {
+        nextAlarmTime = alarm.dateTime; // Zeit aus dem Speicher laden
+        notifyListeners();
+      } else {
+        _scheduleNextAlarm(); // Keiner da? Neuen setzen!
+      }
     }
   }
 
@@ -65,14 +74,14 @@ class BabyController extends ChangeNotifier {
     await _prefs!.setInt('jointsSmoked', jointsSmoked);
   }
 
-  // --- WECKER EIN/AUSSCHALTEN ---
   void toggleAlarm(bool value) {
     isAlarmEnabled = value;
     _saveData();
     if (isAlarmEnabled) {
-      _scheduleNextAlarm(); // Wecker wieder scharf stellen
+      _scheduleNextAlarm();
     } else {
-      Alarm.stop(alarmId); // Wecker sofort stoppen und canceln
+      Alarm.stop(alarmId);
+      nextAlarmTime = null; // Zeit löschen
     }
     notifyListeners();
   }
@@ -94,6 +103,7 @@ class BabyController extends ChangeNotifier {
           deathsCount++;
           _timer?.cancel();
           Alarm.stop(alarmId);
+          nextAlarmTime = null; // Zeit löschen, da tot
         }
         _saveData();
         notifyListeners();
@@ -102,7 +112,6 @@ class BabyController extends ChangeNotifier {
   }
 
   void _scheduleNextAlarm() {
-    // Wenn Wecker ausgeschaltet oder Baby tot, brich ab
     if (!isAlive || !isAlarmEnabled) return;
 
     int minSeconds = max(10, 120 - babyStress.toInt());
@@ -112,6 +121,9 @@ class BabyController extends ChangeNotifier {
 
     final now = DateTime.now();
     final alarmTime = now.add(Duration(seconds: randomDelay));
+
+    // --- KORREKTUR: Wir merken uns die Zeit direkt hier ---
+    nextAlarmTime = alarmTime;
 
     final alarmSettings = AlarmSettings(
       id: alarmId,
@@ -147,7 +159,7 @@ class BabyController extends ChangeNotifier {
     }
     _saveData();
     if (isAlarmEnabled) {
-      _scheduleNextAlarm(); // Planen den Alarm nur, wenn aktiviert
+      _scheduleNextAlarm();
     }
     notifyListeners();
   }

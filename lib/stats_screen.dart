@@ -1,9 +1,32 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'baby_controller.dart';
 
-class StatsScreen extends StatelessWidget {
+class StatsScreen extends StatefulWidget {
   const StatsScreen({super.key});
+
+  @override
+  State<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends State<StatsScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Aktualisiert die Anzeige (für den Countdown) jede Sekunde
+    _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +52,7 @@ class StatsScreen extends StatelessWidget {
                     isAlert: baby.babyStress > 70),
                 const SizedBox(height: 16),
 
-                // --- NEUER TOGGLE FÜR DEN WECKER ---
+                // --- TOGGLE FÜR DEN WECKER ---
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -45,6 +68,13 @@ class StatsScreen extends StatelessWidget {
                     },
                   ),
                 ),
+
+                // --- COUNTDOWN ANZEIGE ---
+                if (baby.isAlarmEnabled) ...[
+                  const SizedBox(height: 12),
+                  _buildCountdown(baby),
+                ],
+
                 const SizedBox(height: 8),
                 Text(
                   "Je höher der Stress, desto öfter klingelt der Baby-Alarm!",
@@ -69,6 +99,32 @@ class StatsScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCountdown(BabyController baby) {
+    final nextTime = baby.nextAlarmTime;
+    if (nextTime == null) return const SizedBox.shrink();
+
+    final diff = nextTime.difference(DateTime.now());
+
+    if (diff.isNegative) {
+      return _buildRow("Nächster Alarm in:", "Klingelt gleich...", isAlert: true);
+    }
+
+    final minutes = diff.inMinutes;
+    final seconds = diff.inSeconds % 60;
+    // Formatierung (z.B. 01:05)
+    final timeString = "${minutes}m ${seconds.toString().padLeft(2, '0')}s";
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: diff.inSeconds < 30 ? Colors.red[200] : Colors.green[100],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: diff.inSeconds < 30 ? Colors.red : Colors.green, width: 2),
+      ),
+      child: _buildRow("Nächster Alarm in:", timeString, isAlert: diff.inSeconds < 30),
     );
   }
 
@@ -103,7 +159,7 @@ class StatsScreen extends StatelessWidget {
             style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: isAlert ? Colors.red : Colors.black
+                color: isAlert ? Colors.red[900] : Colors.black
             ),
           ),
         ],
