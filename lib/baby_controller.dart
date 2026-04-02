@@ -13,6 +13,7 @@ class BabyController extends ChangeNotifier {
   double debt = 0.0;
   bool isAlive = true;
   bool isAlarmEnabled = false;
+  bool hasSeenGinTutorial = false; // NEU: Speichert, ob das Tutorial gezeigt wurde
 
   int donersEaten = 0;
   int deathsCount = 0;
@@ -88,6 +89,7 @@ class BabyController extends ChangeNotifier {
     debt = _prefs!.getDouble('debt') ?? 0.0;
     isAlive = _prefs!.getBool('isAlive') ?? true;
     isAlarmEnabled = _prefs!.getBool('isAlarmEnabled') ?? false;
+    hasSeenGinTutorial = _prefs!.getBool('hasSeenGinTutorial') ?? false; // NEU geladen
     donersEaten = _prefs!.getInt('donersEaten') ?? 0;
     deathsCount = _prefs!.getInt('deathsCount') ?? 0;
     jointsSmoked = _prefs!.getInt('jointsSmoked') ?? 0;
@@ -135,10 +137,18 @@ class BabyController extends ChangeNotifier {
     await _prefs!.setDouble('debt', debt);
     await _prefs!.setBool('isAlive', isAlive);
     await _prefs!.setBool('isAlarmEnabled', isAlarmEnabled);
+    await _prefs!.setBool('hasSeenGinTutorial', hasSeenGinTutorial); // NEU gespeichert
     await _prefs!.setInt('donersEaten', donersEaten);
     await _prefs!.setInt('deathsCount', deathsCount);
     await _prefs!.setInt('jointsSmoked', jointsSmoked);
     await _prefs!.setInt('lastSavedTime', DateTime.now().millisecondsSinceEpoch);
+  }
+
+  // --- NEU: Setzt das Tutorial als gesehen ---
+  void markGinTutorialAsSeen() {
+    hasSeenGinTutorial = true;
+    _saveData();
+    notifyListeners();
   }
 
   void toggleAlarm(bool value) {
