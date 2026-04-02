@@ -307,6 +307,7 @@ class BabyController extends ChangeNotifier {
     ginBottlesFed = 0;
     deathsCount = 0;
     debt = 0.0;
+    hasSeenGinTutorial = false;
     _saveData();
     notifyListeners();
   }
