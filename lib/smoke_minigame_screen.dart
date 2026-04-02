@@ -189,14 +189,36 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
   // --- TIMER VARIABLEN ---
   Timer? _gameTimer;
-  int _timeRemaining = 35; // Zeit in Sekunden (kannst du anpassen)
+  int _timeRemaining = 35; // Zeit in Sekunden
   final int _totalTime = 35;
   bool _timeUp = false;
+
+  // --- NEU: TUTORIAL VARIABLEN ---
+  bool _isInitialized = false;
+  bool _isShowingTutorial = false;
 
   @override
   void initState() {
     super.initState();
-    _startGameTimer();
+    // Den Timer starten wir jetzt erst in didChangeDependencies,
+    // falls das Tutorial nicht gezeigt wird!
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      final babyController = Provider.of<BabyController>(context, listen: false);
+
+      // Prüfen, ob das Tutorial schon gesehen wurde
+      if (!babyController.hasSeenWeedTutorial) {
+        _isShowingTutorial = true;
+      } else {
+        _startGameTimer();
+      }
+
+      _isInitialized = true;
+    }
   }
 
   void _startGameTimer() {
@@ -248,7 +270,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   }
 
   // --- STRAFEN DIALOG ---
-  void _showPenaltyDialog() {
+    void _showPenaltyDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -285,6 +307,8 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
       ),
     );
   }
+
+
 
   @override
   Widget build(BuildContext context) {

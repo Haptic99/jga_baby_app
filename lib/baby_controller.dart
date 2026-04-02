@@ -14,6 +14,7 @@ class BabyController extends ChangeNotifier {
   bool isAlive = true;
   bool isAlarmEnabled = false;
   bool hasSeenGinTutorial = false;
+  bool hasSeenWeedTutorial = false;
 
   // --- NEUE ADMIN VARIABLEN ---
   bool isHungerPaused = false;
@@ -91,6 +92,7 @@ class BabyController extends ChangeNotifier {
     isAlive = _prefs!.getBool('isAlive') ?? true;
     isAlarmEnabled = _prefs!.getBool('isAlarmEnabled') ?? false;
     hasSeenGinTutorial = _prefs!.getBool('hasSeenGinTutorial') ?? false;
+    hasSeenWeedTutorial = _prefs!.getBool('hasSeenWeedTutorial') ?? false;
 
     isHungerPaused = _prefs!.getBool('isHungerPaused') ?? false;
     isChillPaused = _prefs!.getBool('isChillPaused') ?? false;
@@ -142,6 +144,7 @@ class BabyController extends ChangeNotifier {
     await _prefs!.setBool('isAlive', isAlive);
     await _prefs!.setBool('isAlarmEnabled', isAlarmEnabled);
     await _prefs!.setBool('hasSeenGinTutorial', hasSeenGinTutorial);
+    await _prefs!.setBool('hasSeenWeedTutorial', hasSeenWeedTutorial);
 
     await _prefs!.setBool('isHungerPaused', isHungerPaused);
     await _prefs!.setBool('isChillPaused', isChillPaused);
@@ -156,6 +159,12 @@ class BabyController extends ChangeNotifier {
 
   void markGinTutorialAsSeen() {
     hasSeenGinTutorial = true;
+    _saveData();
+    notifyListeners();
+  }
+
+  void markWeedTutorialAsSeen() {
+    hasSeenWeedTutorial = true;
     _saveData();
     notifyListeners();
   }
@@ -308,6 +317,7 @@ class BabyController extends ChangeNotifier {
     deathsCount = 0;
     debt = 0.0;
     hasSeenGinTutorial = false;
+    hasSeenWeedTutorial = false;
     _saveData();
     notifyListeners();
   }
