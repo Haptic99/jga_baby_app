@@ -335,14 +335,13 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
         Expanded(
           child: _buildBrutalistButton(
             text: "Joint rauchen",
-            iconWidget: Image.asset('assets/weed_leaf.png', height: 1000), // Height 1000 bleibt hier aus dem Original? (Vielleicht besser anpassen falls Clipping passiert)
+            iconWidget: Image.asset('assets/weed_leaf.png', height: 1000),
             color: Colors.green,
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) => const SmokeMinigameScreen()));
             },
           ),
         ),
-        // Gin-Minispiel Button wurde entfernt! (wird jetzt via Alarm aufgerufen)
       ],
     );
   }
@@ -419,11 +418,9 @@ class _BabyHomeScreenState extends State<BabyHomeScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                if(baby.revive(codeController.text)) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Baby wiederbelebt!')));
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Falscher Code!')));
-                }
+                // Keine SnackBar (Anzeige am unteren Rand) mehr auslösen
+                baby.revive(codeController.text);
+                codeController.clear();
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
