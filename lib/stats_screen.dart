@@ -16,7 +16,6 @@ class _StatsScreenState extends State<StatsScreen> {
   @override
   void initState() {
     super.initState();
-    // Aktualisiert die Anzeige (für den Countdown) jede Sekunde
     _refreshTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) setState(() {});
     });
@@ -52,7 +51,6 @@ class _StatsScreenState extends State<StatsScreen> {
                     isAlert: baby.babyStress > 70),
                 const SizedBox(height: 16),
 
-                // --- TOGGLE FÜR DEN WECKER ---
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -69,7 +67,6 @@ class _StatsScreenState extends State<StatsScreen> {
                   ),
                 ),
 
-                // --- COUNTDOWN ANZEIGE ---
                 if (baby.isAlarmEnabled) ...[
                   const SizedBox(height: 12),
                   _buildCountdown(baby),
@@ -85,6 +82,7 @@ class _StatsScreenState extends State<StatsScreen> {
             ),
           ),
           const SizedBox(height: 16),
+
           _buildInfoCard(
             title: "Achievements & Zähler",
             color: Colors.blue[50]!,
@@ -93,12 +91,103 @@ class _StatsScreenState extends State<StatsScreen> {
                 _buildRow("Schulden in CHF:", baby.debt.toStringAsFixed(2)),
                 _buildRow("Gegessene Döner:", "${baby.donersEaten}"),
                 _buildRow("Gerauchte Joints:", "${baby.jointsSmoked}"),
+                _buildRow("Gefütterte Gin-Flaschen:", "${baby.ginBottlesFed}"),
                 _buildRow("Todesfälle:", "${baby.deathsCount}"),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // --- NEUE ADMIN KONSOLE ---
+          _buildInfoCard(
+            title: "Admin / Cheats",
+            color: Colors.purple[50]!,
+            content: Column(
+              children: [
+                SwitchListTile(
+                  title: const Text("Mageninhalt einfrieren"),
+                  value: baby.isHungerPaused,
+                  activeColor: Colors.purple,
+                  onChanged: (val) => baby.toggleHungerPause(val),
+                ),
+                SwitchListTile(
+                  title: const Text("Chill-Faktor einfrieren"),
+                  value: baby.isChillPaused,
+                  activeColor: Colors.purple,
+                  onChanged: (val) => baby.toggleChillPause(val),
+                ),
+                const Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => baby.setHunger(100),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green[200]),
+                      child: const Text("Magen 100%", style: TextStyle(color: Colors.black)),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => baby.setChill(100),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue[200]),
+                      child: const Text("Chill 100%", style: TextStyle(color: Colors.black)),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Stress anpassen:", style: TextStyle(fontSize: 16)),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle, color: Colors.green),
+                          onPressed: () => baby.modifyStress(-10),
+                        ),
+                        Text("${baby.babyStress.toInt()}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        IconButton(
+                          icon: const Icon(Icons.add_circle, color: Colors.red),
+                          onPressed: () => baby.modifyStress(10),
+                        ),
+                      ],
+                    )
+                  ],
+                ),
+                const Divider(),
+                Center(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.refresh, color: Colors.red),
+                    label: const Text("Alle Statistiken zurücksetzen", style: TextStyle(color: Colors.red)),
+                    onPressed: () {
+                      _showResetDialog(context, baby);
+                    },
+                  ),
+                )
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  void _showResetDialog(BuildContext context, BabyController baby) {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("Wirklich zurücksetzen?"),
+          content: const Text("Möchtest du alle Schulden und Zähler (Döner, Joints, Gin, Tode) löschen?"),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text("Abbrechen")),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              onPressed: () {
+                baby.resetStats();
+                Navigator.pop(context);
+              },
+              child: const Text("Zurücksetzen", style: TextStyle(color: Colors.white)),
+            )
+          ],
+        )
     );
   }
 
@@ -114,7 +203,6 @@ class _StatsScreenState extends State<StatsScreen> {
 
     final minutes = diff.inMinutes;
     final seconds = diff.inSeconds % 60;
-    // Formatierung (z.B. 01:05)
     final timeString = "${minutes}m ${seconds.toString().padLeft(2, '0')}s";
 
     return Container(

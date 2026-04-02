@@ -138,7 +138,7 @@ class _GinMinigameScreenState extends State<GinMinigameScreen> with SingleTicker
               ),
               const SizedBox(height: 16),
               const Text(
-                "Drücke im richtigen Moment auf STOPP, um die Flasche genau an der grünen Markierung zu füllen!\n\nJe schlechter du afülls, desto schneller schreit das baby wieder.",
+                "Drücke im perfekten Moment auf STOPP, um die Flasche exakt bis zur grünen Markierung zu füllen!\n\nAber Vorsicht: Je ungenauer du einschenkst, desto gestresster wird das Baby – und desto schneller fängt es wieder an zu schreien!",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
               ),

@@ -3,8 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:alarm/alarm.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // NEU
-import 'main.dart'; // Für den flutterLocalNotificationsPlugin
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'main.dart';
 
 class BabyController extends ChangeNotifier {
   double hunger = 100.0;
@@ -13,21 +13,23 @@ class BabyController extends ChangeNotifier {
   double debt = 0.0;
   bool isAlive = true;
   bool isAlarmEnabled = false;
-  bool hasSeenGinTutorial = false; // NEU: Speichert, ob das Tutorial gezeigt wurde
+  bool hasSeenGinTutorial = false;
+
+  // --- NEUE ADMIN VARIABLEN ---
+  bool isHungerPaused = false;
+  bool isChillPaused = false;
 
   int donersEaten = 0;
   int deathsCount = 0;
   int jointsSmoked = 0;
+  int ginBottlesFed = 0; // NEU: Gin-Zähler
 
   final String secretReviveCode = "4242";
   Timer? _timer;
   SharedPreferences? _prefs;
 
   final int alarmId = 42;
-
   DateTime? nextAlarmTime;
-
-  // Notification Konstanten
   final int _statusNotificationId = 888;
 
   BabyController() {
@@ -42,15 +44,14 @@ class BabyController extends ChangeNotifier {
     if (isAlarmEnabled) {
       final alarm = await Alarm.getAlarm(alarmId);
       if (alarm != null) {
-        nextAlarmTime = alarm.dateTime; // Zeit aus dem Speicher laden
+        nextAlarmTime = alarm.dateTime;
         notifyListeners();
       } else {
-        _scheduleNextAlarm(); // Keiner da? Neuen setzen!
+        _scheduleNextAlarm();
       }
     }
   }
 
-  // --- NEU: Aktualisiert die Ongoing Notification ---
   Future<void> _updateOngoingNotification() async {
     if (!isAlive) {
       await flutterLocalNotificationsPlugin.cancel(_statusNotificationId);
@@ -64,7 +65,7 @@ class BabyController extends ChangeNotifier {
       channelDescription: 'Zeigt den dauerhaften Status des Babys an',
       importance: Importance.low,
       priority: Priority.low,
-      ongoing: true,        // Wichtig: Lässt sich nicht wegschieben
+      ongoing: true,
       autoCancel: false,
       showWhen: false,
       icon: '@mipmap/ic_launcher',
@@ -89,10 +90,15 @@ class BabyController extends ChangeNotifier {
     debt = _prefs!.getDouble('debt') ?? 0.0;
     isAlive = _prefs!.getBool('isAlive') ?? true;
     isAlarmEnabled = _prefs!.getBool('isAlarmEnabled') ?? false;
-    hasSeenGinTutorial = _prefs!.getBool('hasSeenGinTutorial') ?? false; // NEU geladen
+    hasSeenGinTutorial = _prefs!.getBool('hasSeenGinTutorial') ?? false;
+
+    isHungerPaused = _prefs!.getBool('isHungerPaused') ?? false;
+    isChillPaused = _prefs!.getBool('isChillPaused') ?? false;
+
     donersEaten = _prefs!.getInt('donersEaten') ?? 0;
     deathsCount = _prefs!.getInt('deathsCount') ?? 0;
     jointsSmoked = _prefs!.getInt('jointsSmoked') ?? 0;
+    ginBottlesFed = _prefs!.getInt('ginBottlesFed') ?? 0;
 
     int? lastSavedMillis = _prefs!.getInt('lastSavedTime');
     if (lastSavedMillis != null && isAlive) {
@@ -103,8 +109,8 @@ class BabyController extends ChangeNotifier {
 
       if (ticks > 0) {
         for (int i = 0; i < ticks; i++) {
-          hunger -= 1.5;
-          chillLevel -= 1.0;
+          if (!isHungerPaused) hunger -= 1.5;
+          if (!isChillPaused) chillLevel -= 1.0;
 
           if (hunger < 50 || chillLevel < 50) {
             babyStress = (babyStress + 0.5).clamp(0, 100);
@@ -123,9 +129,7 @@ class BabyController extends ChangeNotifier {
       }
     }
 
-    // Notification aktualisieren, nachdem Daten geladen sind
     if (isAlive) _updateOngoingNotification();
-
     notifyListeners();
   }
 
@@ -137,14 +141,19 @@ class BabyController extends ChangeNotifier {
     await _prefs!.setDouble('debt', debt);
     await _prefs!.setBool('isAlive', isAlive);
     await _prefs!.setBool('isAlarmEnabled', isAlarmEnabled);
-    await _prefs!.setBool('hasSeenGinTutorial', hasSeenGinTutorial); // NEU gespeichert
+    await _prefs!.setBool('hasSeenGinTutorial', hasSeenGinTutorial);
+
+    await _prefs!.setBool('isHungerPaused', isHungerPaused);
+    await _prefs!.setBool('isChillPaused', isChillPaused);
+
     await _prefs!.setInt('donersEaten', donersEaten);
     await _prefs!.setInt('deathsCount', deathsCount);
     await _prefs!.setInt('jointsSmoked', jointsSmoked);
+    await _prefs!.setInt('ginBottlesFed', ginBottlesFed);
+
     await _prefs!.setInt('lastSavedTime', DateTime.now().millisecondsSinceEpoch);
   }
 
-  // --- NEU: Setzt das Tutorial als gesehen ---
   void markGinTutorialAsSeen() {
     hasSeenGinTutorial = true;
     _saveData();
@@ -158,7 +167,7 @@ class BabyController extends ChangeNotifier {
       _scheduleNextAlarm();
     } else {
       Alarm.stop(alarmId);
-      nextAlarmTime = null; // Zeit löschen
+      nextAlarmTime = null;
     }
     notifyListeners();
   }
@@ -167,8 +176,9 @@ class BabyController extends ChangeNotifier {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       if (isAlive) {
-        hunger -= 1.5;
-        chillLevel -= 1.0;
+        if (!isHungerPaused) hunger -= 1.5;
+        if (!isChillPaused) chillLevel -= 1.0;
+
         if (hunger < 50 || chillLevel < 50) {
           babyStress = (babyStress + 0.5).clamp(0, 100);
         }
@@ -183,7 +193,7 @@ class BabyController extends ChangeNotifier {
           nextAlarmTime = null;
         }
         _saveData();
-        _updateOngoingNotification(); // Update die Notification alle 5 Sek.
+        _updateOngoingNotification();
         notifyListeners();
       }
     });
@@ -229,6 +239,8 @@ class BabyController extends ChangeNotifier {
   }
 
   void evaluateGinFilling(double accuracyLevel) {
+    ginBottlesFed++; // NEU: Gin-Zähler erhöhen
+
     if (accuracyLevel > 0.8) {
       babyStress = (babyStress - 20).clamp(0, 100);
     } else {
@@ -279,5 +291,23 @@ class BabyController extends ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+  // --- NEUE ADMIN FUNKTIONEN ---
+  void setHunger(double val) { hunger = val.clamp(0, 100); _saveData(); _updateOngoingNotification(); notifyListeners(); }
+  void setChill(double val) { chillLevel = val.clamp(0, 100); _saveData(); _updateOngoingNotification(); notifyListeners(); }
+  void modifyStress(double val) { babyStress = (babyStress + val).clamp(0, 100); _saveData(); _updateOngoingNotification(); notifyListeners(); }
+
+  void toggleHungerPause(bool val) { isHungerPaused = val; _saveData(); notifyListeners(); }
+  void toggleChillPause(bool val) { isChillPaused = val; _saveData(); notifyListeners(); }
+
+  void resetStats() {
+    donersEaten = 0;
+    jointsSmoked = 0;
+    ginBottlesFed = 0;
+    deathsCount = 0;
+    debt = 0.0;
+    _saveData();
+    notifyListeners();
   }
 }
