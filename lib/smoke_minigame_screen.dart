@@ -270,7 +270,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   }
 
   // --- STRAFEN DIALOG ---
-    void _showPenaltyDialog() {
+  void _showPenaltyDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -308,7 +308,61 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
     );
   }
 
-
+  // --- NEU: Baut das Tutorial-Overlay ---
+  Widget _buildTutorialOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.85), // Verdunkelt den Hintergrund
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.black, width: 3),
+            boxShadow: const [BoxShadow(color: Colors.black, offset: Offset(0, 6))],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "🌿 JOINT BAUEN 💨",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: Colors.black),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "1. Chatte mit Boro, um Material zu klären.\n\n2. Füll den Grinder und mahle das Weed.\n\n3. Schüttle dein Handy, um den Joint zu drehen.\n\n4. Gib dem Baby den Joint, bevor die Zeit abläuft!",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: () {
+                  // Tutorial abhaken und Spiel & Timer starten!
+                  Provider.of<BabyController>(context, listen: false).markWeedTutorialAsSeen();
+                  setState(() {
+                    _isShowingTutorial = false;
+                  });
+                  _startGameTimer();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  side: const BorderSide(color: Colors.black, width: 2),
+                ),
+                child: const Text(
+                  "LOS GEHT'S!",
+                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -316,13 +370,20 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[900], // Dark-Mode
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildTimerBar(), // Timer-Balken oben
-            Expanded(child: _buildStepContent(baby)), // Hauptinhalt nimmt den restlichen Platz ein
-          ],
-        ),
+      // --- NEU: Stack, damit das Tutorial über dem Spiel schwebt ---
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
+              children: [
+                _buildTimerBar(), // Timer-Balken oben
+                Expanded(child: _buildStepContent(baby)), // Hauptinhalt nimmt den restlichen Platz ein
+              ],
+            ),
+          ),
+          // --- NEU: TUTORIAL OVERLAY WIRD OBEN DRÜBER GELEGT, WENN NÖTIG ---
+          if (_isShowingTutorial) _buildTutorialOverlay(),
+        ],
       ),
     );
   }
