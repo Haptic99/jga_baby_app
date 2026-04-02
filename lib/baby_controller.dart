@@ -20,6 +20,14 @@ class BabyController extends ChangeNotifier {
   bool isHungerPaused = false;
   bool isChillPaused = false;
 
+  bool _alwaysUseLongChat = false;
+  bool get alwaysUseLongChat => _alwaysUseLongChat;
+
+  void toggleLongChat(bool value) {
+    _alwaysUseLongChat = value;
+    notifyListeners();
+  }
+
   int donersEaten = 0;
   int deathsCount = 0;
   int jointsSmoked = 0;

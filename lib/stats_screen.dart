@@ -116,6 +116,21 @@ class _StatsScreenState extends State<StatsScreen> {
                   activeColor: Colors.purple,
                   onChanged: (val) => baby.toggleChillPause(val),
                 ),
+                // --- HIER IST DER NEUE HARDCORE SCHALTER ---
+                SwitchListTile(
+                  title: const Text(
+                      "Hardcore-Modus (Weed)",
+                      style: TextStyle(fontWeight: FontWeight.bold)
+                  ),
+                  subtitle: const Text(
+                      "Zufall aus: Boro braucht ewig zum Antworten."
+                  ),
+                  value: baby.alwaysUseLongChat,
+                  activeColor: Colors.purple,
+                  onChanged: (bool value) {
+                    baby.toggleLongChat(value);
+                  },
+                ),
                 const Divider(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,

@@ -332,7 +332,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                "1. Chatte mit Boro, um Material zu klären.\n\n2. Füll den Grinder und mahle das Weed.\n\n3. Schüttle dein Handy, um den Joint zu drehen.\n\n4. Gib dem Baby den Joint, bevor die Zeit abläuft!",
+                "1. Chatte mit Boro, um Material zu klären.\n\n2. Füll den Grinder und mahle das Weed.\n\n3. Schüttle dein Handy kräftig, um den Joint zu drehen.\n\n4. Gib dem Baby den Joint!\n\nBeeil dich und lass die Zeit nicht ablaufen! Ansonsten wartet eine Strafe auf dich!",
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black),
               ),
@@ -639,9 +639,18 @@ class _ChatMinigameState extends State<_ChatMinigame> {
   @override
   void initState() {
     super.initState();
-    // Wähle beim Start zufällig einen Chatverlauf aus
-    final random = math.Random();
-    selectedChat = chatVerlaeufe[random.nextInt(chatVerlaeufe.length)];
+
+    // Wir holen uns den BabyController, um zu prüfen, ob der Schalter an ist
+    final babyController = Provider.of<BabyController>(context, listen: false);
+
+    if (babyController.alwaysUseLongChat) {
+      // Wenn der Schalter AN ist: Immer Verlauf 14 (Index 13) nehmen (den ganz langen)
+      selectedChat = chatVerlaeufe[13];
+    } else {
+      // Wenn der Schalter AUS ist: Wähle beim Start zufällig einen Chatverlauf aus
+      final random = math.Random();
+      selectedChat = chatVerlaeufe[random.nextInt(chatVerlaeufe.length)];
+    }
 
     // Falls der Chatverlauf (ausnahmsweise) mit einer Antwort startet
     if (selectedChat.isNotEmpty && selectedChat[0].sender == 'Antwort') {
