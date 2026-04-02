@@ -15,6 +15,164 @@ const List<Shadow> outlineShadows = [
   Shadow(offset: Offset(0, 3), color: Colors.black),
 ];
 
+// --- NEU: Datenstrukturen für zufällige Chats ---
+class ChatMessage {
+  final String sender; // 'Schreiber' oder 'Antwort'
+  final String text;
+
+  ChatMessage(this.sender, this.text);
+}
+
+final List<List<ChatMessage>> chatVerlaeufe = [
+  // Verlauf 1
+  [
+    ChatMessage('Schreiber', 'Ehy Boro was geht, i glob i han mini sportsache no bi dir vergesse'),
+    ChatMessage('Antwort', 'Ehy you stimmt, wie schwer sind die nomel gsi?'),
+    ChatMessage('Schreiber', 'Ähm glob 5kg oder so im gesamte'),
+    ChatMessage('Antwort', 'Ah easy kein stress wenn chunsches go holle?'),
+    ChatMessage('Schreiber', 'Hüt so am 5'),
+  ],
+  // Verlauf 2
+  [
+    ChatMessage('Schreiber', 'Ehy Borou i ha e fetts problem. I ha sit 2 täg kei dope meh.'),
+    ChatMessage('Antwort', 'Uhh ha gad hüt neui lieferig becho, baba zügg'),
+    ChatMessage('Schreiber', 'Let’s goo'),
+    ChatMessage('Antwort', 'Chunsch vorbei wend zit hesch'),
+    ChatMessage('Schreiber', 'Hajde jallah'),
+  ],
+  // Verlauf 3
+  [
+    ChatMessage('Schreiber', 'Hajde bre'),
+    ChatMessage('Antwort', 'Yes'),
+    ChatMessage('Schreiber', 'Hase?'),
+    ChatMessage('Antwort', 'Yes'),
+    ChatMessage('Schreiber', 'Yess'),
+  ],
+  // Verlauf 4
+  [
+    ChatMessage('Schreiber', 'Hey Alex ha d’nummere vom toni becho, hesch no was ume'),
+    ChatMessage('Antwort', 'Hahaha jo voll er hets mo scho gseid'),
+    ChatMessage('Antwort', 'Jo voll'),
+    ChatMessage('Schreiber', 'Easy i chum hüt am nomi verbi'),
+    ChatMessage('Antwort', 'Fix'),
+  ],
+  // Verlauf 5 (Lang)
+  [
+    ChatMessage('Schreiber', 'Broo'),
+    ChatMessage('Antwort', 'was gits'),
+    ChatMessage('Antwort', 'alles fit?'),
+    ChatMessage('Schreiber', 'jo man, ha grad gseh wa de Toni gschickt het'),
+    ChatMessage('Schreiber', 'kranks züg'),
+    ChatMessage('Antwort', 'gell, ha ders doch gseit, isch komplett baba'),
+    ChatMessage('Schreiber', 'muesch mir unbedingt was ufd siite legge für hüt Abig!'),
+    ChatMessage('Antwort', 'Machemer. Meld di wenn dusse bisch.'),
+  ],
+  // Verlauf 6
+  [
+    ChatMessage('Schreiber', 'Hey Alex, bisch wach?'),
+    ChatMessage('Antwort', 'Jo bro, wa isch?'),
+    ChatMessage('Schreiber', 'Ha ghört du hesch neus Züg am Start, Lemon Haze oder so?'),
+    ChatMessage('Antwort', 'Fix, geschter frisch ine cho. Schmöckt brutal.'),
+    ChatMessage('Antwort', 'Wieviel bruchsch?'),
+    ChatMessage('Schreiber', 'Mach mol en 50er'),
+    ChatMessage('Schreiber', 'i chum inere Stund verbii'),
+    ChatMessage('Schreiber', 'Isch guet?'),
+    ChatMessage('Antwort', 'Easy, lüt eifach a wend dusse stohsch.'),
+    ChatMessage('Schreiber', 'Wird gmacht, bis den.'),
+  ],
+  // Verlauf 7
+  [
+    ChatMessage('Schreiber', 'Boro!'),
+    ChatMessage('Schreiber', 'Ehy Boro!!'),
+    ChatMessage('Antwort', 'Yooo chill, was los?'),
+    ChatMessage('Schreiber', 'Hesch mis Geld scho becho uf Twint?'),
+    ChatMessage('Antwort', 'i lueg churz...'),
+    ChatMessage('Antwort', 'Yes isch druf.'),
+    ChatMessage('Schreiber', 'Top! Chan i s\'züg hüt obig go hole?'),
+    ChatMessage('Antwort', 'Bin am 6i dehei, chunsch eifach verbi.'),
+    ChatMessage('Schreiber', 'fix, bis den!'),
+  ],
+  // Verlauf 8
+  [
+    ChatMessage('Schreiber', 'Ehy'),
+    ChatMessage('Schreiber', 'Lebsch no?'),
+    ChatMessage('Antwort', 'Hahaha jo man'),
+    ChatMessage('Antwort', 'Ha gschlofe, geschter isch eifach z\'heftig gsi'),
+    ChatMessage('Schreiber', 'Schwör! nögst johr Olma wieder'),
+    ChatMessage('Schreiber', 'Hesch no gnueg züg?'),
+    ChatMessage('Antwort', 'Sicher, Lager isch voll. Hesch jo gseh.'),
+    ChatMessage('Schreiber', 'Baba, i meld mi morn nomol wege de zit.'),
+    ChatMessage('Antwort', 'Easy'),
+  ],
+  // Verlauf 9
+  [
+    ChatMessage('Schreiber', 'Yoo Boro'),
+    ChatMessage('Schreiber', 'bisch hüt obig ume?'),
+    ChatMessage('Antwort', 'jo voll, ab em 8i bini dehei'),
+    ChatMessage('Schreiber', 'perfekt, i chum no go en 50er hole'),
+    ChatMessage('Antwort', 'machsch eifach vorher no en aruef, gell'),
+  ],
+  // Verlauf 10
+  [
+    ChatMessage('Schreiber', 'Bro das züg vo geschter...'),
+    ChatMessage('Antwort', 'zu krass oder?'),
+    ChatMessage('Schreiber', 'anderscht wild, i bin komplett weg gsi'),
+    ChatMessage('Antwort', 'hahaha freut mi, ha no gnueg do'),
+    ChatMessage('Schreiber', 'i meld mi sicher am wuchenend nomel'),
+  ],
+  // Verlauf 11
+  [
+    ChatMessage('Schreiber', 'Ehy wo blibsch?'),
+    ChatMessage('Antwort', 'Bin in 5 min do, chill'),
+    ChatMessage('Schreiber', 'bro es isch chalt dusse'),
+    ChatMessage('Antwort', 'jo sry bus het verspötig gha'),
+    ChatMessage('Schreiber', 'beeil di mol'),
+  ],
+  // Verlauf 12
+  [
+    ChatMessage('Schreiber', 'Hey chani bi dir hüt au bar zahle?'),
+    ChatMessage('Antwort', 'lieber twint bro'),
+    ChatMessage('Schreiber', 'ha mis limit erreicht wegem usgang geschter'),
+    ChatMessage('Antwort', 'ah shit okay, jo usnahmswiis bar hüt'),
+    ChatMessage('Schreiber', 'beste maa, bis spöter'),
+  ],
+  // Verlauf 13
+  [
+    ChatMessage('Schreiber', 'Hesch nomel s gliche wie letst mol?'),
+    ChatMessage('Antwort', 'Na bro, isch komplett usverchauft'),
+    ChatMessage('Antwort', 'ha aber neus amnesia do, schickt di uf de mond'),
+    ChatMessage('Schreiber', 'Tönt au guet, mach mol ready'),
+    ChatMessage('Antwort', 'Isch parat'),
+  ],
+  // Verlauf 14 (EXTREM LANG - Zeit wird hier richtig knapp!)
+  [
+    ChatMessage('Schreiber', 'Ehy Boro'),
+    ChatMessage('Schreiber', 'Wichtig!'),
+    ChatMessage('Antwort', 'wa gits bro'),
+    ChatMessage('Antwort', 'alles guet?'),
+    ChatMessage('Schreiber', 'i bruch für e party morn richtig viel'),
+    ChatMessage('Schreiber', 'hesch no was uf lager?'),
+    ChatMessage('Antwort', 'ufff'),
+    ChatMessage('Antwort', 'morn wird schwer'),
+    ChatMessage('Antwort', 'mues zerst luege obi no so viel ha'),
+    ChatMessage('Schreiber', 'bitte bro, isch e riese party'),
+    ChatMessage('Schreiber', 'zahle dir au meh, keis problem'),
+    ChatMessage('Antwort', 'hm okay warte'),
+    ChatMessage('Antwort', 'i lüt churz mim kolleg a'),
+    ChatMessage('Antwort', '...'),
+    ChatMessage('Schreiber', 'und???'),
+    ChatMessage('Schreiber', 'chasches bsorge?'),
+    ChatMessage('Antwort', 'jo ha was gfunnde'),
+    ChatMessage('Antwort', 'isch aber nid ganz billig'),
+    ChatMessage('Antwort', 'chunt erst morn am nomi ah'),
+    ChatMessage('Schreiber', 'scheissegal, nime alles!'),
+    ChatMessage('Antwort', 'alles klar, i richtes her'),
+    ChatMessage('Schreiber', 'du rettisch mis lebe, schwör'),
+    ChatMessage('Antwort', 'kennsch mi jo, bi immer für mini lüt do'),
+    ChatMessage('Schreiber', 'absolute ehrema'),
+  ],
+];
+
 class SmokeMinigameScreen extends StatefulWidget {
   const SmokeMinigameScreen({super.key});
 
@@ -29,7 +187,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
   double rollProgress = 0.0;
   StreamSubscription? _sensorSub;
 
-  // --- NEUE TIMER VARIABLEN ---
+  // --- TIMER VARIABLEN ---
   Timer? _gameTimer;
   int _timeRemaining = 35; // Zeit in Sekunden (kannst du anpassen)
   final int _totalTime = 35;
@@ -373,7 +531,7 @@ class _SmokeMinigameScreenState extends State<SmokeMinigameScreen> {
 }
 
 // ---------------------------------------------------------
-// Chat Minigame Widgets (Unverändert)
+// Chat Minigame Widgets (NEU: Dynamische Logik)
 // ---------------------------------------------------------
 
 class _ChatMinigame extends StatefulWidget {
@@ -385,58 +543,102 @@ class _ChatMinigame extends StatefulWidget {
 }
 
 class _ChatMinigameState extends State<_ChatMinigame> {
-  int chatStage = 0;
+  late List<ChatMessage> selectedChat;
+  int currentChatIndex = 0;
   List<Map<String, dynamic>> messages = [];
+
   bool isBoroTyping = false;
   bool showNextUserInput = true;
   bool showContinueButton = false;
 
+  @override
+  void initState() {
+    super.initState();
+    // Wähle beim Start zufällig einen Chatverlauf aus
+    final random = math.Random();
+    selectedChat = chatVerlaeufe[random.nextInt(chatVerlaeufe.length)];
+
+    // Falls der Chatverlauf (ausnahmsweise) mit einer Antwort startet
+    if (selectedChat.isNotEmpty && selectedChat[0].sender == 'Antwort') {
+      _checkAndTriggerBoro();
+    }
+  }
+
   String get currentInputText {
-    if (chatStage == 0) return "Ehy Boro was geht, i glob i han mini sportsache no bi dir vergesse";
-    if (chatStage == 1) return "Ähm glob 5 kg oder so im gsamte";
-    if (chatStage == 2) return "Hüt so am 5";
+    if (currentChatIndex < selectedChat.length && selectedChat[currentChatIndex].sender == 'Schreiber') {
+      return selectedChat[currentChatIndex].text;
+    }
     return "";
   }
 
   void _handleSend() async {
-    if (isBoroTyping || chatStage > 2 || !showNextUserInput || showContinueButton) return;
+    if (isBoroTyping || currentChatIndex >= selectedChat.length || !showNextUserInput || showContinueButton) return;
 
-    final userMsg = currentInputText;
-    setState(() {
-      messages.insert(0, {"sender": "user", "text": userMsg});
-      showNextUserInput = false;
-    });
+    // Nur senden, wenn auch wirklich der Schreiber an der Reihe ist
+    if (selectedChat[currentChatIndex].sender == 'Schreiber') {
+      final userMsg = selectedChat[currentChatIndex].text;
 
-    if (chatStage == 2) {
-      setState(() => chatStage++);
-      Future.delayed(const Duration(milliseconds: 100), () {
-        setState(() => showContinueButton = true);
+      setState(() {
+        messages.insert(0, {"sender": "user", "text": userMsg});
+        currentChatIndex++;
+        showNextUserInput = false;
       });
-      return;
+
+      if (currentChatIndex >= selectedChat.length) {
+        _finishChat();
+      } else {
+        _checkAndTriggerBoro();
+      }
+    }
+  }
+
+  void _checkAndTriggerBoro() async {
+    // Solange "Antwort" (Boro) an der Reihe ist, Schleife durchlaufen
+    while (currentChatIndex < selectedChat.length && selectedChat[currentChatIndex].sender == 'Antwort') {
+      setState(() {
+        isBoroTyping = true;
+        showNextUserInput = false;
+      });
+
+      // Simuliere Tipp-Zeit für Boro (1.2 Sekunden pro Nachricht)
+      await Future.delayed(const Duration(milliseconds: 1200));
+
+      if (!mounted) return;
+
+      setState(() {
+        isBoroTyping = false;
+        messages.insert(0, {"sender": "boro", "text": selectedChat[currentChatIndex].text});
+        currentChatIndex++;
+      });
+
+      // Kurze Pause, bevor Boro ggf. die nächste Nachricht schickt
+      await Future.delayed(const Duration(milliseconds: 400));
     }
 
-    setState(() {
-      isBoroTyping = true;
-      chatStage++;
-    });
+    if (!mounted) return;
 
-    await Future.delayed(const Duration(milliseconds: 100));
+    if (currentChatIndex >= selectedChat.length) {
+      _finishChat();
+    } else {
+      // Boro ist fertig, der Schreiber ist wieder dran -> Eingabe aktualisieren und freischalten
+      setState(() {
+        showNextUserInput = true;
+      });
+    }
+  }
 
-    String boroReply = "";
-    if (chatStage == 1) boroReply = "Ehy you stimmt, wie schwer sind die nomel gsi?";
-    if (chatStage == 2) boroReply = "Ah easy kein stress wenn chunsches go holle?";
-
-    setState(() {
-      isBoroTyping = false;
-      messages.insert(0, {"sender": "boro", "text": boroReply});
-      showNextUserInput = true;
+  void _finishChat() {
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (mounted) {
+        setState(() => showContinueButton = true);
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     String displayInput = (!showNextUserInput || currentInputText.isEmpty) ? "..." : currentInputText;
-    bool canSend = !isBoroTyping && chatStage <= 2 && showNextUserInput && !showContinueButton;
+    bool canSend = !isBoroTyping && currentChatIndex < selectedChat.length && showNextUserInput && !showContinueButton;
 
     return Column(
       children: [
@@ -490,7 +692,7 @@ class _ChatMinigameState extends State<_ChatMinigame> {
             child: const Text("Boro schreibt...", style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic)),
           ),
 
-        // Der "Weiter" Button
+        // Der "Weiter" Button am Ende des Chats
         if (showContinueButton)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
@@ -614,7 +816,7 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
   double lastAngle = 0.0;
   bool _isFinished = false;
 
-  // NEU: Tracking, wann zuletzt vibriert wurde (verhindert Dauervibrieren)
+  // Tracking, wann zuletzt vibriert wurde (verhindert Dauervibrieren)
   double _lastVibrationProgress = 0.0;
 
   final double elementSize = 234.0;
@@ -783,7 +985,7 @@ class _CombinedGrinderWorkflowState extends State<_CombinedGrinderWorkflow> {
                 lastAngle = currentAngle;
               });
 
-              // NEU: Haptisches Feedback (löst alle ~1.0 Einheiten aus)
+              // Haptisches Feedback (löst alle ~1.0 Einheiten aus)
               if (grindProgress - _lastVibrationProgress >= 1.0) {
                 HapticFeedback.selectionClick();
                 _lastVibrationProgress = grindProgress;
